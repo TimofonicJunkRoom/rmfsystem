@@ -9,6 +9,24 @@
 #       @date         :2015-10-12 18:28
 #       @algorithm    :
 ==========================================================================*/
+2015-11-2 Linghao <1196422862@qq.com>
+	* NEW: add the funciton that when the program begin, it will automatical
+	ly run the self_checking. The content includes database and profile.
+	add the function that the program can sync with the remote NTP server. 
+
+2015-11-1 Linghao <1196422862@qq.com>
+	* NEW: add the function that the program can detect the network problem
+	and run the reconnect program. The main way is to use SNDTIMEO and RCV
+	TIMEO arguments.
+	Now, the program can run for a long time even if there happen some
+	problem. 
+
+2015-10-29 Linghao <1196422862@qq.com>
+	* DEBUG: in client_pipe.c, when update the database, the funciton may do
+	an error exit. By testing, the main reason is that multiprocess cannot
+	write the database at the same time. The temporary solution is to detect
+	the SQLITE_BUSY and do the operation again. 
+
 2015-10-26 Linghao <1196422862@qq.com>
 	* NEWS: add the scaning function. It is used to scan the PLC IP and port
 	when PLC IP is not known, and keep it in the profile device.config. Then

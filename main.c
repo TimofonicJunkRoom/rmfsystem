@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <signal.h>
+#include "init.h"
 
 pid_t com=-1;
 pid_t deal=-1;
@@ -25,6 +26,7 @@ int main()
 {	
 	int rc;
 	int status;
+	init();
 	pid_t temp;
 	while(1)
 	{
