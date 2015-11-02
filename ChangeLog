@@ -1,0 +1,87 @@
+/*==========================================================================
+#       COPYRIGHT NOTICE
+#       Copyright (c) 2014
+#       All rights reserved
+#
+#       @author       :Ling hao
+#       @qq           :119642282@qq.com
+#       @file         :/home/lhw4d4/project/git/rmfsystem\ChangeLog
+#       @date         :2015-10-12 18:28
+#       @algorithm    :
+==========================================================================*/
+2015-10-26 Linghao <1196422862@qq.com>
+	* NEWS: add the scaning function. It is used to scan the PLC IP and port
+	when PLC IP is not known, and keep it in the profile device.config. Then
+	to get the PLC configuration information. 
+
+
+2015-10-22 Linghao <1196428262@qq.com>
+	* NEWS: add the debugging function, use the macro-DEBUG to deal with the
+	error and debug ok.
+
+
+2015-10-10 Linghao <1196422862@qq.com>
+	* data_deal.c&client_pipe.c: change shared memory's initial setting, 
+	solve the problem that data cannot transmit by shared memory
+	* client_pipe.c: 
+		1 when recving real-time command, add the function to use
+		condition variable to unblock the sending process.
+		2 when recving real-time profile, solve the problem transmitted data
+		whose size is bigger then 1k cannot be received perfectly 
+	* NEWS: normal data/real-time data/changing rate command are O.K.
+
+
+2015-10-09 Linghao <1196422862@qq.com>
+	* DEBUG: when inserting blob data into sqlite3, the function
+	sqlite3_prepare_v2() is needed. But when insert blob and other type data
+	at the same time, sqlite3_exec() and sqlite3_prepare_v2() are needed
+	together, which remains a problem.
+	* NEWS: the normal data transmission has completed after debugging with
+	the server.
+
+
+2015-10-07 Linghao <1196422862@qq.com>
+	* NEWS: provide a new version(comtest_pipe.c&client_pipe.c) to 
+	instead of the origin version,which use named pipe to transmit real-time	data.
+	* comtest_pipe.c&client_pipe.c: when recving a real_time command, open
+	the pipe to transmit and after that, close the pipe.
+	* DEBUG: the real-time function has been running properly
+	* problem: there exist some problems in plc_simulate.c, which runs
+	unstedily
+
+
+2015-10-06 Linghao <1196422862@qq.com>
+	* NEWS: create real_time.xml to record the real-time data of  facility
+	* plc_simulate.c: add the simulating data using function sin() instead 
+	of random data
+	* comtest.c: 
+		1 add a new structure to store the real_time data; 
+	    2 add the function to read the real-time data from real_time.xml; 
+		3 add the function to draw real-time data from raw data by using the
+		new structure
+	* client.c: add a new process when the device is logining in the remote
+	center to tell the center about the plc data location and get the
+	real-time data, whose form is xml
+
+
+2015-09-27 Linghao <1196422862@qq.com>
+	* rmfsystem.h: change struct msg_local shm_local 
+	msg_remote msg_remote shm_remote and add length field
+	* client.c comtest.c data_deal.c: according the changes in rmfsystem.h,
+	adjust the program
+	* NEWS: the debaugging task has basically completed
+	* problem: there is divergence in real_time module 
+	and difficulties in the plc simulation program
+
+
+
+2015-09-24 Linghao <1196422862@qq.com>
+	* NEWS:add ChangeLog & read_file.h & change_profile.h
+	* client.c: 
+		use addoraltconfig() to replace change_config() and
+		change_file()
+	* comtest.c:
+		1: add the function that this program can communicate with 
+		plc_simulate() by TCP and UDP
+		2: add read_plcfile() to read the device.config
+

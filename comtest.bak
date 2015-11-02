@@ -1,0 +1,487 @@
+/*==========================================================================
+#       COPYRIGHT NOTICE
+#       Copyright (c) 2014
+#       All rights reserved
+#
+#       @author       :Ling hao
+#       @qq           :119642282@qq.com
+#       @file         :/home/lhw4d4/project/linghao\comtest.c
+#       @date         :2015-08-25 19:37
+#       @algorithm    :
+==========================================================================*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <string.h>
+#include <sys/socket.h>
+#include "rmfsystem.h"
+#include "shm_mem.h"
+#include <signal.h>
+#include <pthread.h>
+
+int real_time_data=0;
+int second_rate=1;
+int remote_msgid;
+int local_msgid;
+
+void msg_init();
+void *first_level_recv();
+void *second_level_recv();
+void *signal_wait();
+void second_rate_change();
+void real_time_deal();
+void write_pid_local();
+
+void write_pid_local()
+{
+	char line[50];
+	char newline[50];
+	int pid;
+	FILE*fp;
+	FILE*fpnew;
+	fp=fopen(PRO_CONF,"r+");
+	if(fp==NULL)
+	{
+		printf("open porcess_config fail\n");
+		exit(1);
+	}
+	fpnew=fopen("process.config.new","a");
+	if(fpnew==NULL)
+	{
+		printf("open process_config new fial\n");
+		exit(1);
+	}
+	while(fgets(line,50,fp))
+	{
+		if(strncmp(line,"local_pid",9)==0)
+		{
+			pid=getpid();
+			sprintf(newline,"local_pid=%d\n",pid);
+			fputs(newline,fpnew);
+		}
+		else
+			fputs(line,fpnew);
+	}
+	fclose(fp);
+	fclose(fpnew);
+	remove(PRO_CONF);
+	rename("process.config.new",PRO_CONF);
+	printf("	write process_config ok\n");
+	return;
+}
+
+void real_time_deal()
+{
+	char buff[50];
+	FILE*fp;
+	char *p;
+	
+	fp=fopen(DEV_CONF,"r");
+	if(fp==NULL)
+	{
+		printf("open device.config");
+		return;
+	}
+	printf("1\n");
+	while((fgets(buff,50,fp))!=NULL)
+	{
+		if(strncmp(buff,"real_time_data",14)==0)
+		{
+			p=strchr(buff,'=');
+			p++;
+			buff[strlen(buff)-1]='\0';
+			real_time_data=atoi(p);
+			printf("real_time_data=%d\n",real_time_data);
+		}
+	}
+	fclose(fp);
+	return;
+}
+
+void second_rate_change()
+{	
+	char buff[50];
+	FILE*fp;
+	char *p;
+	fp=fopen(DEV_CONF,"r");
+	if(fp==NULL)
+	{
+		printf("open device.config");
+		return;
+	}
+	while((fgets(buff,50,fp))!=NULL)
+	{
+		if(strncmp(buff,"second_rate",11)==0)
+		{
+			p=strchr(buff,'=');
+			p++;
+			buff[strlen(buff)-1]='\0';
+			second_rate=atoi(p);
+			printf("second_rate=%d\n",second_rate);
+		}
+	}
+	fclose(fp);
+	return;
+}
+
+void *signal_wait()
+{
+	int err;
+	int signo;
+	sigset_t sigset;
+	sigemptyset(&sigset);
+	sigaddset(&sigset,SIGUSR1);
+	sigaddset(&sigset,SIGUSR2);
+	while(1)
+	{
+		err=sigwait(&sigset,&signo);
+		if(err!=0)
+			exit(1);
+		switch(signo)
+		{
+			case SIGUSR1:
+				second_rate_change();
+				break;
+			case SIGUSR2:
+				real_time_deal();
+				break;
+			case SIGINT:
+				break;
+			default:
+				exit(1);
+		}
+	}
+}
+void msg_init()
+{
+	int msgid;
+	msgid=msgget((key_t)MSGID_REMOTE,0666|IPC_CREAT);
+	if(msgid==-1)
+	{
+		printf("cannot open msg\n");
+		pthread_exit((void*)1);
+	}
+	printf("	msg_remote init\n");
+	remote_msgid=msgid;
+	msgid=msgget((key_t)MSGID_LOCAL,0666|IPC_CREAT);
+	if(msgid==-1)
+	{
+		printf("com msgget error\n");
+		pthread_exit((void*)1);
+	}
+	local_msgid=msgid;
+	printf("	msg_local init\n");
+	return;
+}
+/*
+int gps_send(char gps_buff[][20])
+{
+	struct msg_local data;
+	if(!strncmp(gps_buff[1],"A",1))
+	{
+		data.mtype=1;
+		data.n_s=(char)gps_buff[3][0];
+		strcpy(data.value1,gps_buff[2]);
+		data.e_w=(char)gps_buff[5][0];
+		strcpy(data.value2,gps_buff[4]);
+	//	printf("n_s=%c,value1=%s,e_w=%c,value2=%s\n",data.n_s,data.value1,data.e_w,data.value2);
+	}
+	else
+	{
+		data.mtype=1;
+		data.n_s='0';
+		strcpy(data.value1,"0");
+		data.e_w='0';
+		strcpy(data.value2,"0");
+	}
+	if(msgsnd(local_msgid,(void*)&data,42,0)==-1)
+	{
+		printf("com msgsnd failed\n");
+		return 0;
+	}
+	printf("	send gps ok\n");
+	return 1;
+}
+
+int init_serial(void)
+{
+	serial_fd=open(DEVICE,O_RDWR|O_NOCTTY|O_NDELAY);
+	if(serial_fd<0)
+	{
+		printf("com open device error\n");
+		return -1;
+	}
+//	printf("serial_fd=%d\n",serial_fd);
+//	if(serial_fd<0)
+//	{
+//		perror("com open");
+//		return -1;
+//	}
+	struct termios options;
+	tcgetattr(serial_fd,&options);//获得相关初始参数
+	options.c_cflag|=(CLOCAL|CREAD);//本地链接 接收使能
+	options.c_cflag&=~CSIZE;//需要屏蔽
+	options.c_cflag&=~CRTSCTS;//无硬件流控
+	options.c_cflag|=CS8;//8位数据位
+	options.c_cflag&=~CSTOPB;//1位停止位
+	options.c_iflag&=~PARENB;//无奇偶校验位
+	options.c_iflag|=IGNCR;
+	//options.c_cc[VTIME]=0;
+	//options.c_cc[VMIN]=40;
+	options.c_oflag=0;//输出模式
+	options.c_lflag=ICANON;//规范模式//options.c_lflag=0;//不激活终端模式
+	cfsetospeed(&options,BOUDRATE);//设置波特率
+	tcflush(serial_fd,TCIFLUSH);//溢出数据可以接收 但不读
+	tcsetattr(serial_fd,TCSANOW,&options);//所有改变立即生效
+	printf("	com serial init ok\n");
+	return 0;
+}
+
+int uart_send(char*data,int datalen)
+{
+	int len=0;
+	len=write(serial_fd,data,datalen);
+	if(len==datalen)
+	{
+		return len;
+	}
+	else 
+	{
+		tcflush(serial_fd,TCOFLUSH);
+		return 0;
+	}
+	return 0;
+}
+
+int uart_recv(char*data,int datalen)
+{
+	int i=0,len,ret=0;
+	fd_set fs_read;
+	struct timeval tv_timeout;
+	char temp[1024];
+	FD_ZERO(&fs_read);
+	FD_SET(serial_fd,&fs_read);
+	tv_timeout.tv_sec=12;
+	tv_timeout.tv_usec=0;
+	ret=select(serial_fd+1,&fs_read,NULL,NULL,&tv_timeout);
+//	printf("ret=%d\n",ret);
+	if(FD_ISSET(serial_fd,&fs_read))
+	{
+		len=read(serial_fd,temp,512);
+		if(len>0)
+		{
+			temp[len]='\0';
+			strcpy(data,temp);
+			return len;
+		}
+		if(len<=0)
+		{
+			return 0;
+		}
+	}
+	else
+	{
+		perror("com select");
+		return 0;
+	}
+	return 0;
+}
+
+int gps_deal(char*data,char gps_buff[][20])
+{
+	char buf[1024];
+	struct msg_gps mysend;
+	int msgid;
+	int i=0,j=0;
+	char temp[12][20];
+	int ret;
+	char *p;
+	strcpy(buf,data);
+	ret=gps_check(buf);
+	if(ret==0)
+		return 0;
+	if(strncmp(buf,"$GPRMC",6)!=0)
+	{
+		perror("com strncmp:$GPRMC");
+		return 0;
+	}
+	p=strchr(buf,',');
+	p++;
+	while(*p!='*')
+	{
+		if(*p==',')
+		{
+			gps_buff[i][j]='\0';
+			i++;
+			j=0;
+		}
+		else
+		{
+			gps_buff[i][j]=*p;
+			j++;
+		}
+		p++;
+	}
+	if(strncmp(gps_buff[1],"A",1)==0)
+	{
+		printf("gps is valid\n");
+	//	return 1;
+
+	}
+//	printf("gps deal ok\n");
+	return 1;
+}
+
+int gps_check(char*data)
+{
+	unsigned char c,h,l;
+	char*p;
+	char chk[3];
+	p=data;
+	if(*p!='$')
+	{
+		printf("com check error\n");
+		return 0;
+	}
+	p++;
+	c=(unsigned char)*p;
+	p++;
+	for(;*p!='*';++p)
+	{
+		c^=(*p);
+	}
+	h=c&0xf0;
+	h=h>>4;
+	l=c&0x0f;
+	if(h<10)
+		chk[0]=h+'0';
+	else
+		chk[0]=h-10+'A';
+	if(l<10)
+		chk[1]=l+'0';
+	else
+		chk[1]=l-10+'A';
+	chk[2]='\0';
+	p=strchr(data,'*');
+	p++;
+	if(!strncmp(p,chk,2))
+	{
+		printf("	com check ok\n");
+		return 1;
+	}
+	return 0;
+}
+*/
+void* first_level_recv()
+{
+	int rc;
+	struct msg_local first_data;
+	unsigned char data[MSG_MAX];
+	first_data.mtype=3;
+	memcpy(first_data.data,data,MSG_MAX);
+	printf("	first level recv pthread\n");
+	while(1)
+	{
+		if((rc=msgsnd(local_msgid,&first_data,MSG_MAX,0))==-1)
+		{
+			printf("local msgsnd failed!\n");
+			exit(1);
+		}
+		printf("send msg data ok \n");
+		sleep(5);
+	}
+	pthread_exit((void*)1);
+}
+
+void *second_level_recv()
+{
+	struct msg_remote sdata;
+	int semid,shmid;
+	int rc;
+	int length;
+	char real_time[]="real_time";
+	char*shmaddr;
+	char*ret;
+	struct shm_local* shared;
+	printf("	second level recv pthread\n");
+	length=sizeof(struct msg_remote)-sizeof(long);
+	if((shmid=creatshm(1))==-1)
+		exit(1);
+	if((shmaddr=shmat(shmid,(char*)0,0))==(char*)-1)
+	{
+		perror("attch shared memory error\n");
+		exit(1);
+	}
+	shared=(struct shm_local *)shmaddr;
+	if((semid=creatsem(1))==-1)
+		exit(1);
+	while(1)
+	{
+		switch(real_time_data)
+		{
+			case 0:
+			sem_p(semid);
+			if(shared->written==0)
+			{
+				memset(shared->data,'y',SHM_MAX);
+				shared->written=1;
+				printf("	send shm data ok\n");
+			}
+			sem_v(semid);
+			sleep(second_rate);
+			break;
+			case 1:
+			sdata.mtype=2;
+			memcpy(sdata.data,real_time,10);
+			if(rc=msgsnd(remote_msgid,(void*)&sdata,length,0)==-1)
+				exit(1);
+			printf("	send real time msg ok\n");
+			break;
+		}
+	}
+	exit(1);
+
+}
+
+void main()
+{
+	int err;
+	FILE*fp;
+	msg_init();
+	sigset_t set;
+	pthread_t tid1;
+	pthread_t tid2;
+	pthread_t tid3;
+	write_pid_local();
+//	printf("1\n");
+	pthread_attr_t attr;
+	sigemptyset(&set);
+	sigaddset(&set,SIGUSR1);
+	sigaddset(&set,SIGUSR2);
+	err=pthread_sigmask(SIG_BLOCK,&set,NULL);
+	if(err!=0)
+		exit(1);
+	err=pthread_attr_init(&attr);
+	if(err!=0)
+		exit(1);
+	err=pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
+	if(err==0)
+	{
+		err=pthread_create(&tid1,&attr,first_level_recv,NULL);
+		if(err!=0)
+			exit(1);
+		err=pthread_create(&tid2,&attr,second_level_recv,NULL);
+		if(err!=0)
+			exit(1);
+		err=pthread_create(&tid3,&attr,signal_wait,NULL);
+		if(err!=0)
+			exit(1);
+		pthread_attr_destroy(&attr);
+	}
+	pthread_exit((void*)1);
+}

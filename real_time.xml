@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <SectionId SectionID="1">
+    <Sensors>
+      <Sensor SensorID="317" SensorLoc="0" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="238" SensorLoc="4" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="554" SensorLoc="8" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="537" SensorLoc="12" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="403" SensorLoc="16" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="456" SensorLoc="20" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="286" SensorLoc="24" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="725" SensorLoc="28" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="601" SensorLoc="32" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="602" SensorLoc="36" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="582" SensorLoc="40" SensorOffset="0" DataLen="4" ValueType="A" />
+      <Sensor SensorID="583" SensorLoc="44" SensorOffset="0" DataLen="4" ValueType="A" />
+    </Sensors>
+  </SectionId>
+</root>
