@@ -87,7 +87,7 @@ int time_init(void)
 	addr.sin_addr.s_addr = inet_addr(server_t); 
 	bzero(&(addr.sin_zero), 8); 
 
-	tv.tv_sec = 10; 
+	tv.tv_sec = 5; 
 	tv.tv_usec = 0;
 
 	FD_ZERO(&inset1);
