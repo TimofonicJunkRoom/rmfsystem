@@ -43,7 +43,7 @@
 #else
 #define DEBUG(format,...)
 #endif
-#define HOST_ADDRESS "10.60.140.246"
+#define HOST_ADDRESS "192.168.0.214"
 //#define HOST_ADDRESS "192.168.42.21"
 #define REAL_TIME "real_time.xml"
 #define FIFO_NAME "/tmp/my_fifo"
@@ -910,14 +910,11 @@ int login()
 		if(result!=-1)
 			break;
 		result = connect(fd, (struct sockaddr *)&address, len);
-		if(result==-1)
-		{
-			DEBUG("CONNECT ERROR:%d",errno);
-		}
-		sleep(++i*5);
+		sleep(++i*3);
 	}
-	if(result == -1) {
-		DEBUG("CONNECT ERROR:%d",errno);
+	if(result==-1)
+	{
+		DEBUG("CONNECT ERROR");
 		exit(1);
 	}
 //	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));

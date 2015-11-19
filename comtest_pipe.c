@@ -38,9 +38,9 @@
 #else
 #define DEBUG(format,...)
 #endif
-#define PLC_ADDR "127.0.0.1"
-#define TCP_PORT 3000
-#define UDP_PORT 2000
+#define PLC_ADDR "192.168.0.1"
+#define TCP_PORT 2000
+#define UDP_PORT 2002
 #define PLC_LEN (2*1024)
 #define REQUEST 16
 #define REAL_TIME_NUM 20
@@ -130,12 +130,12 @@ int tcp_connect()
 		result=connect(client_sockfd,(struct sockaddr*)&client_address,client_len);
 		if(result!=-1)
 			break;
-		sleep(5);
+		sleep(++i*3);
 	}while(i<20);
 //	printf("1\n");
 	if(result==-1)
 	{
-		perror("connect error:");
+		DEBUG("connect error");
 		exit(1);
 	}
 	return client_sockfd;
