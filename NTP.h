@@ -87,7 +87,7 @@ int time_init(void)
 	addr.sin_addr.s_addr = inet_addr(server_t); 
 	bzero(&(addr.sin_zero), 8); 
 
-	tv.tv_sec = 5; 
+	tv.tv_sec = 2; 
 	tv.tv_usec = 0;
 
 	FD_ZERO(&inset1);
@@ -135,6 +135,7 @@ int time_init(void)
 	delaytime = ((newpack.recvtimestamphigh - firsttimestamp) - (newpack.trantimestamphigh - finaltimestamp)) >> 1;
 	tv1.tv_sec = time(NULL) + diftime + delaytime;
 	tv1.tv_usec = 0;
+//	printf("%d\n",(int)tv1.tv_sec);
 	settimeofday(&tv1, NULL);
 	system("hwclock -w");
 	system("date");

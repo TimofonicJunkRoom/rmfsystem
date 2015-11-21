@@ -18,8 +18,8 @@
 #include "plc_simulate.h"
 #include "encrpyt.h"
 
-#define TCP_ADDR "192.168.0.214"
-#define TCP_PORT 10000
+#define TCP_ADDR "192.168.0.1"
+#define TCP_PORT 2000
 #define UDP_LEN 100
 #define UDP_PORT 10000
 #define PUBLIC_KEY "public.key"
@@ -95,12 +95,12 @@ void tcp_communication()
 	request.empty_field=0xff;
 	request.len_empty_field=0x02;
 	/*need fill in*/
-	request.org_id=0xff;
-	request.dbnr=0xff;
-	request.start_address_h=0xff;
-	request.start_address_l=0xff;
-	request.len_h=0xff;
-	request.len_l=0xff;
+	request.org_id=0x02;
+	request.dbnr=0x00;
+	request.start_address_h=0x00;
+	request.start_address_l=0x00;
+	request.len_h=0x00;
+	request.len_l=0x02;
 	rc=write(sockfd,&request,sizeof(struct fetch));
 	if(rc<16)
 	{
@@ -172,5 +172,6 @@ void udp_communication()
 void main()
 {
 //	udp_communication();
-	tcp_encrypt();
+//	tcp_encrypt();
+	tcp_communication();
 }

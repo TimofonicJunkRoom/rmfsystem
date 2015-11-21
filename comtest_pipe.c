@@ -108,7 +108,7 @@ void write_pid_local()
 	fclose(fpnew);
 	remove(PRO_CONF);
 	rename("process.config.new",PRO_CONF);
-	printf("	write process_config ok\n");
+	printf("local:write process_config ok\n");
 	return;
 }
 
@@ -219,7 +219,7 @@ void *signal_wait()
 			case SIGUSR1:
 				read_file("collect_rate","second_rate",value);
 				second_rate=atoi(value);
-				printf("second rate=%d\n",second_rate);
+				printf("local:second rate=%d\n",second_rate);
 				break;
 			case SIGUSR2:
 	//			printf("xmldd\n");
@@ -227,7 +227,7 @@ void *signal_wait()
 				real_time_data=atoi(value);
 				if(real_time_data!=0)
 				{
-					printf("read_xml\n");
+					printf("local:read_xml\n");
 					xml_read(real_time_data);
 					real_time_data=1;
 				}
@@ -327,7 +327,7 @@ void msg_init()
 		printf("cannot open msg\n");
 		pthread_exit((void*)1);
 	}
-	printf("	msg_remote init\n");
+	printf("local:msg_remote init\n");
 	remote_msgid=msgid;
 	msgid=msgget((key_t)MSGID_LOCAL,0666|IPC_CREAT);
 	if(msgid==-1)
@@ -336,7 +336,7 @@ void msg_init()
 		pthread_exit((void*)1);
 	}
 	local_msgid=msgid;
-	printf("	msg_local init\n");
+	printf("local:msg_local init\n");
 	return;
 }
 /*
@@ -556,7 +556,7 @@ void* first_level_recv()
 	server.sin_addr.s_addr=htonl(INADDR_ANY);
 	bind(udp_socket,(struct sockaddr*)&server,sizeof(struct sockaddr));
 	sin_size=sizeof(struct sockaddr_in);
-	printf("	first level recv pthread\n");
+	printf("local:first level recv pthread\n");
 	while(1)
 	{
 		num=recvfrom(udp_socket,first_data.data,MSG_MAX,0,(struct sockaddr*)&client,&sin_size);
@@ -574,7 +574,7 @@ void* first_level_recv()
 			exit(1);
 		}
 //		printf("send msg data ok \n");
-		sleep(5);
+		sleep(1);
 	}
 	pthread_exit((void*)1);
 }
@@ -672,7 +672,7 @@ void *second_level_recv()
 	char*shmaddr;
 	char*ret;
 	struct shm_local* shared;
-	printf("	second level recv pthread\n");
+	printf("local:second level recv pthread\n");
 	fd=tcp_connect();
 	read_plcfile();
 	length=sizeof(struct msg_remote)-sizeof(long);
@@ -713,7 +713,7 @@ void *second_level_recv()
 				}
 				init=0;
 				close(pipe_fd);
-				printf("close pipe\n");
+				printf("local:close pipe\n");
 			}
 			length=tcp_receive(fd,second_data);
 		//	printf("length=%d\n",length);
@@ -752,7 +752,7 @@ void *second_level_recv()
 				}
 				init=1;
 			}
-			printf("real_time\n");
+			printf("local:real_time\n");
 			length=tcp_receive(fd,second_data);
 			length=real_time_select(second_data,real_time);
 			if(length<=0)
@@ -797,6 +797,7 @@ int real_time_select(unsigned char*data,unsigned char *real)
 
 int tcp_receive(int fd,unsigned char *data)
 {
+	int i;
 	int rc;
 	int length=0;
 	struct fetch_res *q;
@@ -823,6 +824,8 @@ int tcp_receive(int fd,unsigned char *data)
 		request.start_address_l=p->start_address_l;
 		request.len_h=p->len_h;
 		request.len_l=p->len_l;
+	//	printf("%02x,%02x,%02x,%02x,%02x,%02x\n",request.org_id,request.dbnr,request.start_address_h,request.start_address_l,request.len_h,request.len_l);
+			
 		rc=write(fd,&request,sizeof(struct fetch));
 		if(rc!=sizeof(struct fetch))
 		{
@@ -830,12 +833,17 @@ int tcp_receive(int fd,unsigned char *data)
 			exit(1);
 		}
 		rc=read(fd,temp,REQUEST);
+	//	for(i=0;i<rc;i++)
+	//		printf("%02x ",temp[i]);
+	//	printf("rc=%d\n",rc);
 		if(rc==16)
 		{
 			q=(struct fetch_res*)temp;
 			if(q->error_field==0x00)
 			{
 				rc=read(fd,temp,PLC_LEN);
+	//			for(i=0;i<rc;i++)
+	//				printf("%02x ",temp[i]);
 				if(rc<=0)
 				{
 					DEBUG("recv error:%d",rc);

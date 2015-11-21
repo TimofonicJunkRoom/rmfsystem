@@ -87,7 +87,7 @@ void write_pid_deal()
 
 void *signal_wait()
 {
-	printf("signal pthread begin\n");
+	printf("deal:deal pthread begin\n");
 	int err;
 	int signo;
 	sigset_t sigset;
@@ -137,7 +137,7 @@ void dbinit(void)
 		pthread_exit((void*)1);
 	}
 	else
-		printf("	deal open local.db successfully\n");
+		printf("deal:deal open local.db successfully\n");
 	return;
 }
 
@@ -178,7 +178,7 @@ void msg_init(void)
 		exit(-1);
 	}
 	msg_local=msgid;
-	printf("	deal msg init ok\n");
+	printf("deal:deal msg init ok\n");
 	return;
 }
 
@@ -280,7 +280,7 @@ void* first_level_deal()
 	struct msg_remote data1;
 	char time[100];
 	int i;
-	printf("first level begin\n");
+	printf("deal:first level begin\n");
 	msg_init();
 	while(1)
 	{
@@ -309,7 +309,7 @@ void*second_level_deal()
 	int length;
 	int rc,flag=0;
 	unsigned char buff[SHM_MAX];
-	printf("second level begin\n");
+	printf("deal:second level begin\n");
 	struct shm_remote *temp;
 	char time[100];
 	struct shm_local *shm_data;

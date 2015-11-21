@@ -36,6 +36,7 @@
 #include <netdb.h>
 #include <sys/wait.h>
 #include <asm/ioctls.h>
+#include "base64.h"
 
 #define __DEBUG__
 #ifdef __DEBUG__
@@ -210,7 +211,7 @@ int update_data_1(int number)
 	char * sql="update device_first_level_data set confirm=1 where number=?";
 	while((rc=sqlite3_prepare_v2(db,sql,strlen(sql),&stmt3,NULL))!=SQLITE_OK)
 	{
-		printf("tata\n");
+//		printf("tata\n");
 		if(rc==SQLITE_BUSY)
 		{
 			usleep(10000);
@@ -395,7 +396,7 @@ int device_change()
 	commandnumber=n;
 //	printf("n=%d\n",n);
 	sprintf(commandline,"%s=%s",parameter,value);
-	printf("CHAG: %s\n",commandline);
+	printf("remote:CHAG: %s\n",commandline);
 	gettime(time);
 	insert_command(n,time,command,commandline);
 	addoraltconfig(DEV_CONF,parameter,commandline);
@@ -454,7 +455,7 @@ void dbinit()
 		exit(1);
 	}
 	else
-		printf("remote open local.db successfully\n");
+		printf("remote:open local.db successfully\n");
 	return;
 }
 
@@ -467,7 +468,7 @@ void msg_init(void)
 		DEBUG("LOCAL MSG ERROR");
 		exit(EXIT_FAILURE);
 	}
-	printf("local_msg init ok\n");
+	printf("remote:msg init ok\n");
 	remote_msgid=msgid;
 	return;
 }
@@ -495,11 +496,12 @@ int msg_recv(struct msg_remote*data)
 
 void * remote_recv()
 {
-	printf("remote secv pthread begin\n");
+	printf("remote:secv pthread begin\n");
 	char recvbuff[100];
 	int rc;
 	while(1)
 	{
+//		printf("1\n");
 		rc=get_line(socketfd,recvbuff,sizeof(recvbuff));
 //		printf("recvbuff=%s\n",recvbuff);
 		if(strncmp(recvbuff,"CHAG",4)==0)
@@ -509,7 +511,7 @@ void * remote_recv()
 		}
 		else if(strncmp(recvbuff,"RETM",4)==0)
 		{
-			printf("real time data begin!\n");
+			printf("remote:real time data begin!\n");
 			rc=real_time_data();
 		}
 		else if(strncmp(recvbuff,"2200",4)==0)
@@ -616,7 +618,7 @@ int real_time_data()
 		}
 	//	printf("1\n");
 		fflush(stdout);
-		printf("real_time=%d\n",real_time);
+		printf("remote:real_time=%d\n",real_time);
 		fflush(stdout);
 		if(real_time)
 		{
@@ -669,7 +671,7 @@ int send_signal_usr2()
 	ret=kill((pid_t)deal_pid,SIGUSR2);
 	if(ret!=0)
 		return 0;
-	printf("send signal ok\n");
+	printf("remote:send signal ok\n");
 	return 1;
 }
 
@@ -689,7 +691,7 @@ void main()
 		exit(1);
 	}
 	err=pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
-	printf("local begin\n");
+	printf("remote:local begin\n");
 	socketfd=conn();
 	if(err==0)
 	{
@@ -729,14 +731,14 @@ int conn()
 		}	
 		fd=login();
 	}
-	printf("conn ok\n");
+	printf("remote:conn ok\n");
 	return fd;
 }
 
 int first_login()
 {
 	struct timeval timeo;
-	timeo.tv_sec=3;
+	timeo.tv_sec=5;
 	timeo.tv_usec=0;
 	int rc;
 	int fd;
@@ -764,7 +766,7 @@ int first_login()
 		DEBUG("CONNECT ERROR");
 		exit(1);
 	}
-	printf("local_first connection\n");
+	printf("remote:local_first connection\n");
 	snprintf(write_buf,4096,"RCON 002\r\nlength=0\r\n\r\n");
 	write(fd,write_buf,strlen(write_buf));
 //	printf("send ok**************\n%s\n",write_buf);
@@ -894,6 +896,9 @@ int login()
 	int fd;
 	struct sockaddr_in address;
 	FILE *fp;
+	char name[20];
+	char password[20];
+	char encrypt[40];
 	char *p,*ptr;
 	timeo.tv_sec=5;
 	timeo.tv_usec=0;
@@ -918,7 +923,7 @@ int login()
 		exit(1);
 	}
 //	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
-	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
+//	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 //	int keepalive=1;
 //	int keepidle=2;
 //	int keepinternal=5;
@@ -927,7 +932,7 @@ int login()
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPIDLE,(void *)&keepidle,sizeof(keepidle));
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPINTVL,(void *)&keepinternal,sizeof(keepinternal));
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPCNT,(void *)&keepcount,sizeof(keepcount));
-	printf("local CONNECTION!\n");
+	printf("remote:local CONNECTION!\n");
 	snprintf(write_buf,4096,"RCON 002\r\nlength=0\r\n\r\n");
 	rc=write(fd,write_buf,strlen(write_buf));
 	if(rc<=0)
@@ -946,20 +951,26 @@ int login()
 	while(get_line(fd,read_buf,4096)>1);
 	//write_buf="LOGI 002\r\n";
 	snprintf(write_buf,4096,"LOGI 002\r\n");
-	fp=fopen(CONFIG,"r+");
-	fgets(temp,4096,fp);
-	fgets(temp,4096,fp);
-	p=strchr(temp,'=');
-	p++;
-	strcpy(username,p);
-	p=strchr(username,'\n');
-	*p='\0';
+//	fp=fopen(CONFIG,"r+");
+//	fgets(temp,4096,fp);
+//	fgets(temp,4096,fp);
+//	p=strchr(temp,'=');
+//	p++;
+//	strcpy(username,p);
+//	p=strchr(username,'\n');
+//	*p='\0';
+//	strcat(write_buf,temp);//!
+//	fgets(temp,4096,fp);//!
+//	fclose(fp);
+	read_file("login","username",name);
+	read_file("login","password",password);
+	base64_encode_v2(password,encrypt,strlen(password));
+	sprintf(temp,"username=%s\r\nlength=0\r\n\r\n%s",name,encrypt);
+
 	strcat(write_buf,temp);//!
-	fgets(temp,4096,fp);//!
-	fclose(fp);
-	strcat(write_buf,temp);//!
-	write_buf[strlen(write_buf)-1]='\0';
-	strcat(write_buf,"\r\nlength=0\r\n\r\n");
+//	write_buf[strlen(write_buf)-1]='\0';
+//	strcat(write_buf,"length=0\r\n\r\n");
+
 	rc=write(fd,write_buf,strlen(write_buf));
 	if(rc<=0)
 	{
@@ -1020,7 +1031,7 @@ int login()
 	fp=fopen(REAL_TIME,"w");
 	fputs(read_buf,fp);
 	fclose(fp);
-	printf("local connection ok\n");
+	printf("remote:local connection ok\n");
 	return fd;
 }
 
@@ -1033,13 +1044,14 @@ int get_line(int sock,char*buf,int size)
 	while((i<size-1)&&(c!='\n'))
 	{
 		n=recv(sock,&c,1,0);
-		if(n>0)
+		while(1)
 		{
-
+			if(n>0)
+			{
+//				printf("%c",c);
 				if(c=='\r')
 				{
 					n=recv(sock,&c,1,MSG_PEEK);
-				
 					if((n>0)&&(c=='\n'))
 					{
 						m=recv(sock,&c,1,0);
@@ -1050,22 +1062,31 @@ int get_line(int sock,char*buf,int size)
 						}
 					}
 					else if(n==0)
-					  c='\n';
+						c='\n';
 					else
 					{
+						perror("error");
 						DEBUG("ERROR");
 						exit(1);
 					}
 				}
 				buf[i]=c;
 				i++;
-		}
-		else if(n==0)
-			c='\n';
-		else
-		{
-			DEBUG("ERROR:%d",errno);
-			exit(1);
+				break;
+			}
+			else if(n==0)
+			{
+				c='\n';
+				break;
+			}
+			else
+			{
+				if(errno==11)
+					break;
+				perror("error");
+				DEBUG("ERROR");
+				exit(1);
+			}
 		}
 	}
 	buf[i]='\0';
@@ -1226,7 +1247,7 @@ int send_level1(struct msg_remote data)
 		DEBUG("WRITE ERROR");
 		exit(1);
 	}
-	printf("send response number=%d\n",data.number);
+	printf("remote:send response number=%d\n",data.number);
 	return 1;
 }
 
@@ -1256,7 +1277,7 @@ int send_level3(struct msg_remote data)
 		DEBUG("WRITE ERROR");
 		exit(1);
 	}
-	printf("send a first data number=%d\n",data.number);
+	printf("remote:send a first data number=%d\n",data.number);
 	datalevel1=data.number;
 	pthread_mutex_lock(&mutex);
 	while(!confirm)
@@ -1274,7 +1295,7 @@ void *remote_send()
 	unsigned char real_time_data[256];
 	int pipe_fd;
 	int flag=0;
-	printf("remote send pthread begin\n");
+	printf("remote:send pthread begin\n");
 	int semid,shmid;
 	int length;
 	void*shmaddr;
@@ -1365,7 +1386,7 @@ void *remote_send()
 
 		while(!real_time)
 		{
-//			printf("gaga\n");
+		//	printf("gaga\n");
 			if(msg_recv(&gpsdata))
 			{
 //				printf("%ld length=%d\n",gpsdata.mtype,gpsdata.length);
@@ -1415,7 +1436,7 @@ void *remote_send()
 						DEBUG("WRITE ERROR");
 						exit(1);
 					}
-					printf("send a second data number=%d\n",sdata.number);
+					printf("remote:send a second data number=%d\n",sdata.number);
 					datalevel2=sdata.number;
 					pthread_mutex_lock(&mutex);
 					while(!confirm)
@@ -1424,8 +1445,7 @@ void *remote_send()
 					pthread_mutex_unlock(&mutex);
 				}
 			}
-			else
-				usleep(500000);
+			usleep(100000);
 		}
 	}
 

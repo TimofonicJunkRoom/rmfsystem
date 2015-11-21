@@ -1,6 +1,10 @@
 object=rmfsystem.h shm_mem.h
 .PHONY:all
-all:data_deal client comtest plc_simulate client_pipe comtest_pipe
+all:data_deal client comtest plc_simulate client_pipe comtest_pipe main
+main:main.o
+	gcc -o main main.o -lsqlite3 -lpthread
+main.o:main.c NTP.h
+	gcc -c main.c
 data_deal:data_deal.o
 	gcc -o data_deal data_deal.o -lsqlite3 -lpthread
 data_deal.o:data_deal.c $(object)
@@ -28,4 +32,4 @@ client_pipe.o:client_pipe.c $(object)
 
 .PHONY:clean
 clean:
-	rm data_deal.o client_pipe.o comtest_pipe.o plc_simulate.o
+	rm data_deal.o client_pipe.o comtest_pipe.o plc_simulate.o main.o

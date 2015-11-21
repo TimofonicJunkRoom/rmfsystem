@@ -13,8 +13,8 @@
 #include "plc_simulate.h"
 
 #define LOCAL_ADDRESS "127.0.0.1"
-#define UDP_PORT 2000
-#define TCP_PORT 3000
+#define UDP_PORT 2002
+#define TCP_PORT 2000
 #define UDP_INTERVAL 2
 #define UDP_BUFF 2
 #define TCP_BUFF 64*1024
@@ -132,7 +132,7 @@ void *tcp_send()
 					else
 					{
 						printf("haha%02x\n",fetch_struct.org_id);
-						if(fetch_struct.org_id==0x01)
+						if(fetch_struct.org_id==0x02)
 						{
 							response_data(fetch_struct,tcp_socket);
 							printf("1\n");
