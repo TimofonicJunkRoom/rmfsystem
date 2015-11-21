@@ -16,16 +16,44 @@
 #include<netinet/in.h>
 #include<string.h>
 #include "plc_simulate.h"
+#include "encrpyt.h"
 
-
-#define TCP_ADDR "192.168.1.1"
+#define TCP_ADDR "192.168.0.214"
 #define TCP_PORT 10000
 #define UDP_LEN 100
 #define UDP_PORT 10000
+#define PUBLIC_KEY "public.key"
+#define PUBLIC_TXT "public.txt"
 
 int tcp_connect(void);
 void udp_communication(void);
+void tcp_encrypt();
 
+void tcp_encrypt()
+{
+	char np[4096];
+	char bp[4096];
+	int n;
+	FILE*fp;
+	char *content;
+	char temp[4096];
+	int sock;
+	fp=fopen(PUBLIC_KEY,"w");
+	sock=tcp_connect();
+	n=read(sock,temp,4096);
+	printf("%d\n",n);
+	strcpy(np,"-----BEGIN PUBLIC KEY-----\n");
+	strcat(np,temp);
+	strcat(np,"\n-----END PUBLIC KEY-----");
+	printf("%s\n",np);
+	fputs(np,fp);
+	fclose(fp);
+	content=encrypt("are you sb?",PUBLIC_KEY);
+	write(sock,content,4096);
+	close(sock);
+	return;
+	
+}
 
 int tcp_connect()
 {
@@ -143,6 +171,6 @@ void udp_communication()
 
 void main()
 {
-	udp_communication();
-	tcp_communication();
+//	udp_communication();
+	tcp_encrypt();
 }
