@@ -6,7 +6,7 @@
 struct plc_loc
 {
 	int used;
-	int sensorID;
+	int offset;
 	int location;
 	int length;
 };
@@ -14,6 +14,8 @@ struct plc_loc
 struct plc_loc real_time_loc[20];
 void xml_read(int partid)
 {
+//	printf("1\n");
+	char xml[20];
 	int i=0;
 	int n;
 	xmlChar* value=NULL;
@@ -24,6 +26,7 @@ void xml_read(int partid)
 //	printf("1\n");
 	xmlKeepBlanksDefault(0);//quite important!
 	doc=xmlParseFile("real_time.xml");
+	sprintf(xml,"Section%d",partid);
 //	printf("1\n");
 	while(i<20)
 	{
@@ -53,43 +56,27 @@ void xml_read(int partid)
 	while(cur!=NULL)
 	{	
 //		printf("%s\n",cur->name);
-		if(!xmlStrcmp(cur->name,(const xmlChar*)"SectionId"))
+		if(!xmlStrcmp(cur->name,(const xmlChar*)xml))
 		{
 //			printf("1\n");
-			value=xmlGetProp(cur,"PartID");
-			i=atoi(value);
-			if(i==partid)
-			{
+			sensorcur=cur->xmlChildrenNode;
+			i=0;
+			while(sensorcur!=NULL)
+			{	
 //				printf("1\n");
-				sensorcur=cur->xmlChildrenNode;
-				i=0;
-				while(sensorcur!=NULL)
+				real_time_loc[i].used=1;
+				if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"Sensor"))
 				{
-//					printf("1\n");
-					if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"Sensors"))
-					{
-//						printf("1\n");
-						detail=sensorcur->xmlChildrenNode;
-						while(detail!=NULL)
-						{	
-//							printf("1\n");
-							real_time_loc[i].used=1;
-							if(!xmlStrcmp(detail->name,(const xmlChar*)"Sensor"))
-							{
-								value=xmlGetProp(detail,"SensorID");
-								real_time_loc[i].sensorID=atoi(value);
-								value=xmlGetProp(detail,"SensorLoc");
-								real_time_loc[i].location=atoi(value);
-								value=xmlGetProp(detail,"DataLen");
-								real_time_loc[i].length=atoi(value);
-								i++;
-							}
-							detail=detail->next;
-						}
-					}
-					sensorcur=sensorcur->next;
+					printf("1\n");
+					value=xmlGetProp(sensorcur,"SensorOffset");
+					real_time_loc[i].offset=atoi(value);
+					value=xmlGetProp(sensorcur,"SensorLoc");
+					real_time_loc[i].location=atoi(value);
+					value=xmlGetProp(sensorcur,"DataLen");
+					real_time_loc[i].length=atoi(value);
+					i++;
 				}
-
+				sensorcur=sensorcur->next;
 			}
 		}
 		cur=cur->next;
@@ -98,11 +85,12 @@ void xml_read(int partid)
 
 void main()
 {
-	xml_read(9);
+//	printf("1\n");
+	xml_read(1);
 	int i=0;
 	for(;real_time_loc[i].used!=0;i++)
 	{
-		printf("%d\n",real_time_loc[i].sensorID);
+		printf("%d\n",real_time_loc[i].offset);
 	}
 }
 

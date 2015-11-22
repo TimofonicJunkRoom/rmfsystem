@@ -965,7 +965,7 @@ int login()
 	read_file("login","username",name);
 	read_file("login","password",password);
 	base64_encode_v2(password,encrypt,strlen(password));
-	sprintf(temp,"username=%s\r\nlength=0\r\n\r\n%s",name,encrypt);
+	sprintf(temp,"username=%s\r\npassword=%s\r\nlength=0\r\n\r\n",name,encrypt);
 
 	strcat(write_buf,temp);//!
 //	write_buf[strlen(write_buf)-1]='\0';

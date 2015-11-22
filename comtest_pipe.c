@@ -56,7 +56,7 @@ struct plc_struct * plc_head=NULL;
 struct plc_loc
 {
 	int used;
-	int  sensorID;
+	int offset;
 	int location;
 	int length;
 };
@@ -242,6 +242,7 @@ void *signal_wait()
 
 void xml_read(int partid)
 {
+	char xml[20];
 	int i=0;
 	int n;
 	xmlChar* value=NULL;
@@ -251,6 +252,7 @@ void xml_read(int partid)
 	xmlNodePtr detail;
 	xmlKeepBlanksDefault(0); //take care!
 	doc=xmlParseFile(REAL_TIME);
+	sprintf(xml,"Section%d",partid);
 	while(i<REAL_TIME_NUM)
 	{
 		real_time_loc[i].used=0;
@@ -277,41 +279,27 @@ void xml_read(int partid)
 //	printf("1\n");
 	while(cur!=NULL)
 	{
-		if(!xmlStrcmp(cur->name,(const xmlChar*)"SectionId"))
-		{
-			value=xmlGetProp(cur,"SectionID");
-			i=atoi(value);
-			if(i==partid)
-			{
-			//	printf("1\n");
-				sensorcur=cur->xmlChildrenNode;
-				i=0;
-				while(sensorcur!=NULL)
-				{
-					if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"Sensors"))
-					{
-						detail=sensorcur->xmlChildrenNode;
-						while(detail!=NULL)
-						{	
-						//	printf("1\n");
-							real_time_loc[i].used=1;
-							if(!xmlStrcmp(detail->name,(const xmlChar*)"Sensor"))
-							{
-						//		printf("google\n");
-								value=xmlGetProp(detail,"SensorID");
-								real_time_loc[i].sensorID=atoi(value);
-								value=xmlGetProp(detail,"SensorLoc");
-								real_time_loc[i].location=atoi(value);
-								value=xmlGetProp(detail,"DataLen");
-								real_time_loc[i].length=atoi(value);
-								i++;
-							}
-							detail=detail->next;
-						}
-					}
-					sensorcur=sensorcur->next;
-				}
 
+		if(!xmlStrcmp(cur->name,(const xmlChar*)xml))
+		{
+		//	printf("1\n");
+			sensorcur=cur->xmlChildrenNode;
+			i=0;
+			while(sensorcur!=NULL)
+			{
+				real_time_loc[i].used=1;
+				if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"Sensor"))
+				{
+			//		printf("google\n");
+					value=xmlGetProp(sensorcur,"SensorOffset");
+					real_time_loc[i].offset=atoi(value);
+					value=xmlGetProp(sensorcur,"SensorLoc");
+					real_time_loc[i].location=atoi(value);
+					value=xmlGetProp(sensorcur,"DataLen");
+					real_time_loc[i].length=atoi(value);
+					i++;
+				}
+				sensorcur=sensorcur->next;
 			}
 		}
 		cur=cur->next;
@@ -787,10 +775,28 @@ int real_time_select(unsigned char*data,unsigned char *real)
 {
 	int count=0;
 	int i=0;
+	unsigned char bit[2];
+	int bito[8]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 	for(;real_time_loc[i].used!=0;i++)
 	{
-		memcpy(real+count,data+real_time_loc[i].location,real_time_loc[i].length);
-		count+=real_time_loc[i].length;
+		switch(real_time_loc[i].length)
+		{
+			case 1:
+				memset(bit,0,2);
+				memcpy(bit+1,data+real_time_loc[i].location,1);
+				bit[1]=bit[1] & bito[real_time_loc[i].offset];
+				memcpy(real+count,bit,2);
+				count+=2;
+				break;
+			case 16:
+				memcpy(real+count,data+real_time_loc[i].location,real_time_loc[i].length);
+				count+=2;
+				break;
+			case 32:
+				memcpy(real+count,data+real_time_loc[i].location,real_time_loc[i].length);
+				count+=4;
+			break;
+		}
 	}
 	return count;
 }
