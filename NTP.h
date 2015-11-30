@@ -99,7 +99,7 @@ int time_init(void)
 	if(select(sockfd + 1, &inset1, NULL, NULL, &tv) < 0)
 	{
 		perror("select error!\n");
-		exit(1);
+		return 0; //don't do anything
 	}
 	else
 	{
@@ -109,7 +109,7 @@ int time_init(void)
 			if(recv(sockfd, &newpack, sizeof(newpack), 0) < 0)
 			{
 				perror("recv newpack error!\n");
-				exit(1);
+				return 0; //don't do anything
 			}
 		}
 	}

@@ -59,6 +59,7 @@ int update_data_1(int);
 int update_data_2(int);
 int first_login();
 int login();
+void dbrecord(char*);
 int get_line(int sock,char *buf,int size);
 int change_file_single_value(char*buf);
 int change_file(char*buf);
@@ -399,6 +400,7 @@ int device_change()
 	printf("remote:CHAG: %s\n",commandline);
 	gettime(time);
 	insert_command(n,time,command,commandline);
+	addoraltconfig(DEV_CONF,"setting","setting=1");
 	addoraltconfig(DEV_CONF,parameter,commandline);
 	send_signal();
 	msg_data.mtype=1;
@@ -889,6 +891,8 @@ int first_login()
 
 int login()
 {
+	char value[20];
+	int flag=0;
 	struct timeval timeo;
 	int rc;
 	int i=0;
@@ -910,18 +914,42 @@ int login()
 	len = sizeof(address);
 	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
 	result = connect(fd, (struct sockaddr *)&address, len);
-	while(i<=20)
-	{	
+	while(1)
+	{
 		if(result!=-1)
 			break;
-		result = connect(fd, (struct sockaddr *)&address, len);
-		sleep(++i*3);
+		while(i<=20)
+		{	
+			result = connect(fd, (struct sockaddr *)&address, len);
+			if(result!=-1)
+				break;
+			sleep(++i*3);
+		}
+		if(result==-1)
+		{
+			DEBUG("CONNECT ERROR");
+			dbrecord("NETWORK ABNORMAL");
+			addoraltconfig(DEV_CONF,"setting","setting=2");
+			send_signal();
+		}
+		while((i>20)&&(result==-1))
+		{
+			result=connect(fd,(struct sockaddr*)&address,len);
+			sleep(i*3);
+		}
 	}
-	if(result==-1)
+	if(result!=-1)
 	{
-		DEBUG("CONNECT ERROR");
-		exit(1);
+		dbrecord("NETWORK NORMAL");
+		read_file("setting","setting",value);
+		result=atoi(value);
+		if(result!=0)
+		{
+			addoraltconfig(DEV_CONF,"setting","setting=0");
+			send_signal();
+		}
 	}
+
 //	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
 //	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 //	int keepalive=1;
@@ -1300,7 +1328,7 @@ void *remote_send()
 	int length;
 	void*shmaddr;
 	struct shm_remote sdata;
-	char sendbuf[1024];
+	char sendbuf[4096];
 	struct msg_remote gpsdata;
 	struct shm_remote *p;
 	if((shmid=creatshm(2))==-1)
@@ -1488,6 +1516,41 @@ void gettime(char *datetime)
 	tm_now=localtime(&now);
 	sprintf(date,"%d-%d-%d %d:%d:%d",(tm_now->tm_year+1900),(tm_now->tm_mon+1),tm_now->tm_mday,tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
 	memcpy(datetime,date,strlen(date));
+	return;
+}
+
+
+void dbrecord(char* state)
+{
+	char time[100];
+	gettime(time);
+	int rc;
+	char* errmsg=0;
+	sqlite3_stmt *stmt=NULL;
+	const char* sql="insert into device_running_statement values(?,?)";
+	if(sqlite3_prepare_v2(db,sql,strlen(sql),&stmt,0)!=SQLITE_OK)
+	{
+		if(stmt)
+			sqlite3_finalize(stmt);
+		DEBUG("PREPARE ERROR");
+		exit(1);
+	}
+	sqlite3_bind_text(stmt,1,time,strlen(time),SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt,2,state,strlen(state),SQLITE_TRANSIENT);
+	while(1)
+	{
+		if(rc=sqlite3_step(stmt)!=SQLITE_DONE)
+		{
+			if(rc==SQLITE_BUSY)
+				continue;
+			DEBUG("INSERT ERROR");
+			exit(1);
+		}
+		else
+			break;
+	}
+	sqlite3_finalize(stmt);
+	sqlite3_close(db);
 	return;
 }
 

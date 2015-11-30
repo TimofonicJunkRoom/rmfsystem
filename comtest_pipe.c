@@ -198,6 +198,7 @@ void second_rate_change()
 */
 void *signal_wait()
 {
+	int result;
 	int err;
 	int rate;
 	int signo;
@@ -217,9 +218,14 @@ void *signal_wait()
 		switch(signo)
 		{
 			case SIGUSR1:
-				read_file("collect_rate","second_rate",value);
-				second_rate=atoi(value);
-				printf("local:second rate=%d\n",second_rate);
+				read_file("setting","setting",value);
+				result=atoi(value);
+				if(result==1)
+				{
+					read_file("collect_rate","second_rate",value);
+					second_rate=atoi(value);
+					printf("local:second rate=%d\n",second_rate);
+				}
 				break;
 			case SIGUSR2:
 	//			printf("xmldd\n");

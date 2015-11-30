@@ -20,7 +20,7 @@
 
 void dbinit(void);
 void gettime(char*);
-void dbrecord(void);
+void dbrecord(char*);
 pid_t com=-1;
 pid_t deal=-1;
 pid_t local=-1;
@@ -31,7 +31,7 @@ int main()
 	int rc;
 	int status;
 	init();
-	dbrecord();
+	dbrecord("START");
 	pid_t temp;
 	while(1)
 	{
@@ -112,7 +112,7 @@ void dbinit(void)
 	return;
 }
 
-void dbrecord(void)
+void dbrecord(char * state)
 {
 	dbinit();
 	char time[100];
@@ -129,7 +129,7 @@ void dbrecord(void)
 		exit(1);
 	}
 	sqlite3_bind_text(stmt,1,time,strlen(time),SQLITE_TRANSIENT);
-	sqlite3_bind_text(stmt,2,"start",5,SQLITE_TRANSIENT);
+	sqlite3_bind_text(stmt,2,state,strlen(state),SQLITE_TRANSIENT);
 	while(1)
 	{
 		if(rc=sqlite3_step(stmt)!=SQLITE_DONE)

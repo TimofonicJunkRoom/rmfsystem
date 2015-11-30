@@ -7,7 +7,7 @@ main.o:main.c NTP.h
 	gcc -c main.c
 data_deal:data_deal.o
 	gcc -o data_deal data_deal.o -lsqlite3 -lpthread
-data_deal.o:data_deal.c $(object)
+data_deal.o:data_deal.c $(object) read_file.h
 	gcc -c  data_deal.c 
 client:client.o
 	gcc -o client client.o -lpthread -lsqlite3

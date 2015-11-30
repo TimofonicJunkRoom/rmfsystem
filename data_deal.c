@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <errno.h>
+#include "read_file.h"
 #define __DEBUG__
 #ifdef __DEBUG__
 #define DEBUG(format,...)  printf("File: "__FILE__",Line: %04d: "format"\n",__LINE__,##__VA_ARGS__)
@@ -42,6 +43,7 @@ void write_pid_deal();
 #define INC(x) (((++x)>65536)?1:x)
 
 int real_time=0;
+int networkflag=0;
 int count1=0;
 int count2=0;
 pthread_mutex_t mut;
@@ -87,12 +89,15 @@ void write_pid_deal()
 
 void *signal_wait()
 {
+	int result;
+	char value[20];
 	printf("deal:deal pthread begin\n");
 	int err;
 	int signo;
 	sigset_t sigset;
 	sigemptyset(&sigset);
 	sigaddset(&sigset,SIGUSR2);
+	sigaddset(&sigset,SIGUSR1);
 	while(1)
 	{
 		err=sigwait(&sigset,&signo);
@@ -101,13 +106,27 @@ void *signal_wait()
 			DEBUG("SIGNAL ERROR:%d",err);
 			exit(1);
 		}
-		if(signo==SIGUSR2)
+		switch(signo)
 		{
-			if(real_time)
-				real_time=0;
-			else
-				real_time=1;
+			case SIGUSR2:
+				if(real_time)
+					real_time=0;
+				else
+					real_time=1;
+				break;
+			case SIGUSR1:
+				read_file("setting","setting",value);
+				result=atoi(value);
+				if(result==2)
+				{
+					if(networkflag)
+						networkflag=0;
+					else
+						networkflag=1;
+				}
+				break;
 		}
+		
 //		printf("real_time=%d\n",real_time);
 	}
 }
@@ -295,7 +314,7 @@ void* first_level_deal()
 //		printf("length=%d\n",data.length);
 		memcpy(data1.data,data.data,data.length);
 		insert(&data1);
-		if(!real_time)
+		if(!real_time&&!networkflag)
 		{
 			msg_send(msg_remote,&data1);
 //			printf("send msg ok ag\n");
@@ -372,7 +391,7 @@ void*second_level_deal()
 		}
 		else
 			usleep(100000);
-		while(flag)
+		while(flag&&!networkflag)
 		{
 //			printf("ma\n");
 			if(sem_p(semid2)==-1)
