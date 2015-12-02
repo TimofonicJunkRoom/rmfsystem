@@ -5,24 +5,24 @@
 #
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
-#       @file         :/home/lhw4d4/project/git/rmfsystem/plc_simulate\plc_simulate.h
-#       @date         :2015/09/14 14:45
+#       @file         :/home/lhw4d4/project/git/rmfsystem\plc_simulate.h
+#       @date         :2015-12-02 14:40
 #       @algorithm    :
 ==========================================================================*/
+#ifndef _PLC_SIMULATE_H_
+#define _PLC_SIMULATE_H_
 
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<unistd.h>
-#include<netinet/in.h>
-#include<arpa/inet.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<errno.h>
-#include<netdb.h>
-#include<string.h>
-#include<time.h>
-#include<pthread.h>
-#include<math.h>
+#define LOCAL_ADDRESS "127.0.0.1"
+#define UDP_PORT 2002
+#define TCP_PORT 2000
+#define UDP_INTERVAL 2
+#define UDP_BUFF 2
+#define TCP_BUFF 64*1024
+#define ANGLE(a) (a+5)>360?(a=0):(a=a+5,a)
+#define PI 3.141592
+
+extern int plc_float[];
+
 struct fetch
 {
 	unsigned char systemid_1;
@@ -59,3 +59,17 @@ struct fetch_res
 	unsigned char fill_field[5];
 };
 
+void * udp_send(void*);
+
+void * tcp_send(void*);
+
+int tcp_establish(void);
+
+void response_error(int);
+
+void response_data(struct fetch,int);
+
+void init_struct(struct fetch_res*);
+
+int combine(unsigned char,unsigned char);
+#endif

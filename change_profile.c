@@ -1,6 +1,17 @@
-#include<stdlib.h>
-#include<stdio.h>
-#include<string.h>
+/*==========================================================================
+#       COPYRIGHT NOTICE
+#       Copyright (c) 2015
+#       All rights reserved
+#
+#       @author       :Ling hao
+#       @qq           :119642282@qq.com
+#       @file         :/home/lhw4d4/project/git/rmfsystem\change_profile.c
+#       @date         :2015/12/02 16:20
+#       @algorithm    :
+==========================================================================*/
+#include "change_profile.h"
+
+#include "rmfsystem.h"
 
 int addoraltconfig(char* conf_path,char*conf_name,char*config_buff)
 {
@@ -77,8 +88,9 @@ int addoraltconfig(char* conf_path,char*conf_name,char*config_buff)
 	fputs(sum_buf,fp);
 	fclose(fp);
 }
-
+/*
 void main()
 {
 	addoraltconfig("./device.config","second_rate","second_rate=10");
 }
+*/

@@ -6,19 +6,13 @@
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
 #       @file         :/home/lhw4d4/project/git/rmfsystem\read_file.c
-#       @date         :2015/09/23 20:11
+#       @date         :2015-12-02 12:09
 #       @algorithm    :
 ==========================================================================*/
-#include "rmfsystem.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <errno.h>
- 
-#define KEYVALLEN 100
+#include "read_file.h"
 
-struct plc_struct *plc_head=NULL;
+#include "rmfsystem.h"
+#include <assert.h>
 
 /*   É¾³ý×ó±ßµÄ¿Õ¸ñ   */
 char * l_trim(char * szOutput, const char *szInput)
@@ -129,7 +123,7 @@ int GetProfileString(char *profile, char *AppName, char *KeyName, char *KeyVal )
   return(-1);
 }
 // an example
-unsigned char read_file(char *part1,char* part2)
+unsigned char read_profile(char *part1,char* part2)
 {
 		char para[20];
         unsigned char m;
@@ -138,76 +132,12 @@ unsigned char read_file(char *part1,char* part2)
 		return m;
 }
 
-void main()
+void read_file(char*part1,char*part2,char*value)
 {
-	int i;
-	struct plc_struct *q=NULL;
-	int number;
-	char part1[32];
-	char part2[32];
-	unsigned char org_id;
-	unsigned char dbnr;
-	unsigned char start_address_h;
-	unsigned char start_address_l;
-	unsigned char len_h;
-	unsigned char len_l;
-	struct plc_struct *p;
-	p=plc_head;
-	strcpy(part1,"collect_area");
-	strcpy(part2,"org_id");
-	org_id=read_file(part1,part2);
-//	printf("%2x\n",org_id);
-	strcpy(part1,"number_area");
-	strcpy(part2,"number");
-	number=(int)read_file(part1,part2);
-//	printf("%d\n",number);
-//	printf("number=%d org_id=%2x\n",number,org_id);
-	for(i=1;i<=number;i++)
-	{
-		struct plc_struct* newnode;
-		newnode=(struct plc_struct*)malloc(sizeof(struct plc_struct));
-		newnode->org_id=org_id;
-		sprintf(part1,"%d",i);
-		strcpy(part2,"area");
-		dbnr=read_file(part1,part2);
-	//	printf("1\n");
-		newnode->dbnr=dbnr;
-		strcpy(part2,"start_address_h");
-		start_address_h=read_file(part1,part2);
-		newnode->start_address_h=start_address_h;
-		strcpy(part2,"start_address_l");
-		start_address_l=read_file(part1,part2);
-		newnode->start_address_l=start_address_l;
-		strcpy(part2,"len_h");
-		len_h=read_file(part1,part2);
-		newnode->len_h=len_h;
-		strcpy(part2,"len_l");
-		len_l=read_file(part1,part2);
-		newnode->len_l=len_l;
-	//	printf("1\n");
-		if(plc_head==NULL)
-		{
-			p=newnode;
-			plc_head=p;
-			p->next=NULL;
-		//	printf("%02x\n",plc_head->dbnr);
-		}
-		else
-		{
-			p->next=newnode;
-			p=p->next;
-			p->next=NULL;
-		//	printf("%02x\n",p->dbnr);
-		}
-		//printf("1\n");
-	}
-//	printf("%02x\n",plc_head->dbnr);
-	q=plc_head;
-	for(;q!=NULL;q=q->next)
-	{
-		printf("2\n");
-		printf("%2x\n",q->org_id);
-		fflush(stdout);
-		printf("%02x\n",q->dbnr);
-	}
+	GetProfileString("./device.config",part1,part2,value);
+}
+
+void read_file_v1(char*part1,char*part2,char*value)
+{
+	GetProfileString("./config",part1,part2,value);
 }

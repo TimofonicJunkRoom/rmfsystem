@@ -5,34 +5,30 @@
 #
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
-#       @file         :/home/lhw4d4/project/haha\main.c
-#       @date         :2015-07-07 13:42
+#       @file         :/home/lhw4d4/project/git/rmfsystem\main.c
+#       @date         :2015-12-02 16:28
 #       @algorithm    :
 ==========================================================================*/
+#include "main.h"
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
+#include "rmfsystem.h"
 #include <sys/types.h>
 #include <signal.h>
 #include "init.h"
-#include "ntp.h"
+#include <sqlite3.h>
+#include <unistd.h>
+#include <time.h>
 
-void dbinit(void);
-void gettime(char*);
-void dbrecord(char*);
-pid_t com=-1;
-pid_t deal=-1;
-pid_t local=-1;
-sqlite3 *db;
+static pid_t com=-1;
+static pid_t deal=-1;
+static pid_t local=-1;
+static sqlite3 *db;
 
 int main()
 {	
 	int rc;
 	int status;
 	init();
-	ntp();
 	dbrecord("START");
 	pid_t temp;
 	while(1)
@@ -149,14 +145,14 @@ void dbrecord(char * state)
 	return;	
 }
 
-void gettime(char*datetime)
+void gettime(char *datetime)
 {
 	time_t now;
 	char date[100];
-	struct tm*tm_now;
+	struct tm *tm_now;
 	time(&now);
 	tm_now=localtime(&now);
 	sprintf(date,"%d-%d-%d %d:%d:%d",(tm_now->tm_year+1900),(tm_now->tm_mon+1),tm_now->tm_mday,tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
-	memcpy(datetime,date,strlen(date));
-	return;
+		memcpy(datetime,date,strlen(date));
+			return;
 }

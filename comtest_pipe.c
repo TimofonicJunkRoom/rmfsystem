@@ -6,18 +6,16 @@
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
 #       @file         :/home/lhw4d4/project/git/rmfsystem\comtest_pipe.c
-#       @date         :2015-10-07 16:26
+#       @date         :2015-12-02 16:36
 #       @algorithm    :
 ==========================================================================*/
+#include "comtest_pipe.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "rmfsystem.h"
@@ -29,50 +27,14 @@
 #include "plc_simulate.h"
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
-#include <limits.h>
 
-
-#define __DEBUG__
-#ifdef __DEBUG__
-#define DEBUG(format,...) printf("FIle: "__FILE__", Line: %04d : "format"\n",__LINE__,##__VA_ARGS__)
-#else
-#define DEBUG(format,...)
-#endif
-#define PLC_ADDR "192.168.0.1"
-#define TCP_PORT 2000
-#define UDP_PORT 2002
-#define PLC_LEN (2*1024)
-#define REQUEST 16
-#define REAL_TIME_NUM 20
-#define REAL_TIME "real_time.xml"
-#define FIFO_NAME "/tmp/my_fifo"
-#define BUFF_SIZE PIPE_BUF
 int real_time_data=0;
 int second_rate=1;
 int remote_msgid;
 int local_msgid;
 struct plc_struct * plc_head=NULL;
 
-struct plc_loc
-{
-	int used;
-	int offset;
-	int location;
-	int length;
-};
-
 struct plc_loc real_time_loc[REAL_TIME_NUM];
-
-int tcp_connect();
-
-void msg_init();
-void *first_level_recv();
-void *second_level_recv();
-void *signal_wait();
-void second_rate_change();
-void real_time_deal();
-void write_pid_local();
-void xml_read(int);
 
 void write_pid_local()
 {
@@ -196,7 +158,7 @@ void second_rate_change()
 	return;
 }
 */
-void *signal_wait()
+void *signal_wait(void *arg)
 {
 	int result;
 	int err;
@@ -553,7 +515,7 @@ int gps_check(char*data)
 	return 0;
 }
 */
-void* first_level_recv()
+void* first_level_recv(void* arg)
 {
 	int rc;
 	struct msg_local first_data;
@@ -669,7 +631,7 @@ int read_plcfile()
 	return 1;
 }
 
-void *second_level_recv()
+void *second_level_recv(void *arg)
 {
 	int flag;
 	unsigned char c;

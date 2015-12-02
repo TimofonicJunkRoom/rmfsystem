@@ -9,34 +9,12 @@
 #       @date         :2015/11/02 09:38
 #       @algorithm    :
 ==========================================================================*/
+#include "init.h"
 
-#include <string.h>
-#include <sqlite3.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "NTP.h"
+#include "rmfsystem.h"
+#include "mini-ntpclient.h"
 #include "read_file.h"
 #include "change_profile.h"
-
-#define __DEBUG__
-#ifdef __DEBUG__
-#define DEBUG(format,...) printf("File: "__FILE__", Line: %04d: "format"\n",__LINE__,##__VA_ARGS__)
-#else 
-#define DEBUG(format,...)
-#endif
-
-#define DB "local.db"
-#define CONFIG "config"
-#define DEV_CONFIG "device.config"
-#define PRO_CONFIG "process.config"
-
-void db_init(void);
-sqlite3* db_exist(void);
-void db_table(sqlite3 *db);
-void profile_init(void);
-void profile_config(void);
-void profile_dev(void);
-void profile_process(void);
 
 void db_init()
 {
@@ -151,36 +129,36 @@ void profile_dev()
 {
 	int rc;
 	char value[5];
-	rc=access(DEV_CONFIG,0);
+	rc=access(DEV_CONF,0);
 	if(rc!=0)
 	{
-		DEBUG("profile: %s not exist!......\n",DEV_CONFIG);
+		DEBUG("profile: %s not exist!......\n",DEV_CONF);
 		exit(1);
 	}
-	printf("profile: %s detect ok!......\n",DEV_CONFIG);
+	printf("profile: %s detect ok!......\n",DEV_CONF);
 	read_file("real_time","real_time_data",value);
 	rc=atoi(value);
 	if(rc==1)
-		addoraltconfig(DEV_CONFIG,"real_time_data","real_time_data=0");
+		addoraltconfig(DEV_CONF,"real_time_data","real_time_data=0");
 }
 
 void profile_process()
 {
 	int rc;
 	char value[5];
-	rc=access(PRO_CONFIG,0);
+	rc=access(PRO_CONF,0);
 	if(rc!=0)
 	{
-		DEBUG("profile: %s not exist!......\n",PRO_CONFIG);
+		DEBUG("profile: %s not exist!......\n",PRO_CONF);
 		exit(1);
 	}
-	printf("profile: %s detect ok!......\n",PRO_CONFIG);
+	printf("profile: %s detect ok!......\n",PRO_CONF);
 
 }
 
 void init()
 {
-	time_init();
+	ntp();
 	db_init();
 	profile_init();
 }

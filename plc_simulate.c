@@ -5,31 +5,20 @@
 #
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
-#       @file         :/home/lhw4d4/project/git/rmfsystem/plc_simulate\plc_simulate.c
-#       @date         :2015/09/14 18:18
+#       @file         :/home/lhw4d4/project/git/rmfsystem\plc_simulate.c
+#       @date         :2015-12-02 15:59
 #       @algorithm    :
 ==========================================================================*/
 
 #include "plc_simulate.h"
+#include <netinet/in.h>
+#include "rmfsystem.h"
+#include <math.h>
+#include <pthread.h>
 
-#define LOCAL_ADDRESS "127.0.0.1"
-#define UDP_PORT 2002
-#define TCP_PORT 2000
-#define UDP_INTERVAL 2
-#define UDP_BUFF 2
-#define TCP_BUFF 64*1024
-#define ANGLE(a) (a+5)>360?(a=0):(a=a+5,a)
-#define PI 3.141592
 int plc_float[15];
-void *udp_send();
-void *tcp_send();
-int tcp_establish(void);
-int combine(unsigned char,unsigned char);
-void response_error(int);
-void response_data(struct fetch,int);
-void init_struct(struct fetch_res*);
 
-void * udp_send()
+void * udp_send(void *arg)
 {
 	int i;
 	unsigned char d[2];
@@ -67,7 +56,7 @@ void * udp_send()
 
 }
 
-void *tcp_send()
+void *tcp_send(void*arg)
 {
 	int pid;
 	int i=0;

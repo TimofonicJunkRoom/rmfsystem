@@ -6,14 +6,12 @@
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
 #       @file         :/home/lhw4d4/project/git/rmfsystem\scan.c
-#       @date         :2015/10/25 18:58
+#       @date         :2015-12-02 10:57
 #       @algorithm    :
 ==========================================================================*/
-#include<errno.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<unistd.h>
+#include "scan.h"
+
+#include "rmfsystem.h"
 #include<fcntl.h>
 #include<sys/select.h>
 #include<sys/ioctl.h>
@@ -25,8 +23,6 @@
 #include"read_file.h"
 #include"change_profile.h"
 
-#define TCP_PORT 2000
-#define MAXSIZE 100
 
 int sock_connect(char *address)
 {

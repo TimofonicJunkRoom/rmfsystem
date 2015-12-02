@@ -5,42 +5,21 @@
 #
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
-#       @file         :/home/lhw4d4/project/linghao\data_deal.c
-#       @date         :2015-09-07 21:13
+#       @file         :/home/lhw4d4/project/git/rmfsystem\data_deal.c
+#       @date         :2015-12-02 17:38
 #       @algorithm    :
 ==========================================================================*/
+#include "data_deal.h"
 
-#include "rmfsystem.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sqlite3.h>
 #include "shm_mem.h"
 #include <pthread.h>
 #include <signal.h>
-#include <errno.h>
 #include "read_file.h"
-#define __DEBUG__
-#ifdef __DEBUG__
-#define DEBUG(format,...)  printf("File: "__FILE__",Line: %04d: "format"\n",__LINE__,##__VA_ARGS__)
-#else
-#define DEBUG(format,...)
-#endif
-void msg_init(void);
-int msg_recv(int,struct msg_local*);
-void dbinit(void);
-void gettime(char*);
-int insert(struct msg_remote *);
-int insert_second(int,char*,unsigned char*,int);
-int msg_send(int,struct msg_remote*);
-void * first_level_deal();
-void* second_level_deal();
-void* signal_wait();
-void write_pid_deal();
-
-#define INC(x) (((++x)>65536)?1:x)
+#include <sys/shm.h>
+#include <sys/types.h>
 
 int real_time=0;
 int networkflag=0;
@@ -87,7 +66,7 @@ void write_pid_deal()
 	return;
 }
 
-void *signal_wait()
+void *signal_wait(void *arg)
 {
 	int result;
 	char value[20];
@@ -294,7 +273,7 @@ int msg_send(int msg,struct msg_remote*data)
 //		printf("msgsnd ok\n");
 	return 0;
 }
-void* first_level_deal()
+void* first_level_deal(void *arg)
 {
 	struct msg_local data;
 	struct msg_remote data1;
@@ -324,7 +303,7 @@ void* first_level_deal()
 	exit(1);
 }
 
-void*second_level_deal()
+void*second_level_deal(void *arg)
 {
 	int length;
 	int rc,flag=0;

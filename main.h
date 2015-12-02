@@ -5,18 +5,18 @@
 #
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
-#       @file         :/home/lhw4d4/project/git/rmfsystem\scan.h
-#       @date         :2015-12-02 10:49
+#       @file         :/home/lhw4d4/project/git/rmfsystem\main.h
+#       @date         :2015/12/02 16:28
 #       @algorithm    :
 ==========================================================================*/
-#ifndef _SCAN_H_
-#define _SCAN_H_
 
-#define TCP_PORT 2000
-#define MAXSIZE 100
+#ifndef _MAIN_H_
+#define _MAIN_H_
 
-int sock_connect(char*);
-int scanip(void);
-int scan(void);
+void dbinit(void);
+
+void dbrecord(char*);
+
+int main(void);
 
 #endif

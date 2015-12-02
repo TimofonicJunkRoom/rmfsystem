@@ -9,8 +9,14 @@
 #       @date         :2015-08-25 17:33
 #       @algorithm    :
 ==========================================================================*/
+#ifndef _RMFSYSTEM_H_
+#define _RMFSYSTEM_H_
 
 #include <sys/msg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 
 #define MSGID_LOCAL 3000
 #define MSGID_REMOTE 4000
@@ -20,6 +26,16 @@
 #define DEV_CONF "device.config"
 #define PRO_CONF "process.config"
 #define CONFIG "config"
+#define REAL_TIME "real_time.xml"
+#define FIFO_NAME "/tmp/my_fifo"
+
+#define __DEBUG__
+#ifdef __DEBUG__
+#define DEBUG(format,...) printf("FILE: "__FILE__", LINE: %04d: "format"\n",__LINE__,##__VA_ARGS__)
+#else
+#define DEBUG(format,...)
+#endif
+
 
 struct msg_local
 {
@@ -65,3 +81,6 @@ struct plc_struct
 	struct plc_struct * next;
 };
 
+void gettime(char*);
+
+#endif

@@ -15,59 +15,18 @@
  *  GNU General Public License for more details.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+#include "mini-ntpclient.h"
+
+#include "rmfsystem.h"
 #include <syslog.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <poll.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <time.h>
-#include <unistd.h>
-#include <errno.h>
 #include <sys/timex.h>
-#include "read_file.h"
-
-#define JAN_1970  0x83aa7e80      /* 2208988800 1970 - 1900 in seconds */
-#define NTP_PORT  123
-
-/* How to multiply by 4294.967296 quickly (and not quite exactly)
- * without using floating point or greater than 32-bit integers.
- * If you want to fix the last 12 microseconds of error, add in
- * (2911*(x))>>28)
- */
-#define NTPFRAC(x) ( 4294*(x) + ( (1981*(x))>>11 ) )
-
-/* The reverse of the above, needed if we want to set our microsecond
- * clock (via settimeofday) based on the incoming time in NTP format.
- * Basically exact.
- */
-#define USEC(x) ( ( (x) >> 12 ) - 759 * ( ( ( (x) >> 10 ) + 32768 ) >> 16 ) )
-
-/* Converts NTP delay and dispersion, apparently in seconds scaled
- * by 65536, to microseconds.  RFC1305 states this time is in seconds,
- * doesn't mention the scaling.
- * Should somehow be the same as 1000000 * x / 65536
- */
-#define sec2u(x) ( (x) * 15.2587890625 )
-
-#define LI 0
-#define VN 3
-#define MODE 3
-#define STRATUM 0
-#define POLL 4
-#define PREC -6
-
-struct ntptime {
-	unsigned int coarse;
-	unsigned int fine;
-};
-
-
+ 
 static void send_packet(int sd)
 {
 	uint32_t data[12];
@@ -170,7 +129,7 @@ static int query_server(char *srv)
 }
 
 /* Connects to each server listed on the command line and sets the time */
-int main(int argc, char *argv[])
+int ntp()
 {
 	int i;
 	char value[30];

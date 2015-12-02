@@ -1,10 +1,21 @@
-#include <stdio.h>
-#include<stdlib.h>
-#include<string.h>
+/*==========================================================================
+#       COPYRIGHT NOTICE
+#       Copyright (c) 2015
+#       All rights reserved
+#
+#       @author       :Ling hao
+#       @qq           :119642282@qq.com
+#       @file         :/home/lhw4d4/project/git/rmfsystem\base64.c
+#       @date         :2015/12/02 16:25
+#       @algorithm    :
+==========================================================================*/
+#include "base64.h"
 
-static char base64_index[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+#include "rmfsystem.h"
 
-char* base64_encode_v1(const char * input,const size_t length,char* output)
+char base64_index[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+char* base64_encode_v1(char * input,int length,char* output)
 {
 	*output = '\0';
 	if(input == NULL||length<1)

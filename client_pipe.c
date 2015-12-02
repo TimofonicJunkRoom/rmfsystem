@@ -6,28 +6,24 @@
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
 #       @file         :/home/lhw4d4/project/git/rmfsystem\client_pipe.c
-#       @date         :2015-11-30 22:52
+#       @date         :2015-12-02 17:51
 #       @algorithm    :
 =========================================================================*/
+#include "client_pipe.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <limits.h>
 #include <sys/socket.h>
-#include <stdio.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <sqlite3.h>
-#include <string.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <time.h>
-#include <errno.h>
-#include "rmfsystem.h"
 #include "shm_mem.h"
 #include <pthread.h>
 #include "change_profile.h"
@@ -37,17 +33,7 @@
 #include <sys/wait.h>
 #include <asm/ioctls.h>
 #include "base64.h"
-
-#define __DEBUG__
-#ifdef __DEBUG__
-#define DEBUG(format,...)  printf("File: "__FILE__",Line: %04d: "format"\n",__LINE__,##__VA_ARGS__)
-#else
-#define DEBUG(format,...)
-#endif
-#define HOST_ADDRESS "192.168.0.92"
-//#define HOST_ADDRESS "192.168.42.21"
-#define REAL_TIME "real_time.xml"
-#define FIFO_NAME "/tmp/my_fifo"
+#include <sys/shm.h>
 
 int commandnumber;
 int datalevel1;
@@ -496,7 +482,7 @@ int msg_recv(struct msg_remote*data)
 	}
 }
 
-void * remote_recv()
+void * remote_recv(void*arg)
 {
 	printf("remote:secv pthread begin\n");
 	char recvbuff[100];
@@ -1323,7 +1309,7 @@ int send_level3(struct msg_remote data)
 	return 1;
 }
 
-void *remote_send()
+void *remote_send(void *arg)
 {
 	int rc;
 	int init=1;
