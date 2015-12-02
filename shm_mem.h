@@ -65,7 +65,7 @@ int opensem(int i)
 	int sid;
 	if(i==1)
 	{
-		if((sid=semget((key_t)SEMID,0,0666))==-1)
+		if((sid=semget((key_t)SEMID,0,0666|IPC_CREAT))==-1)
 		{
 			perror("open semget call failed\n");
 			return -1;
@@ -73,7 +73,7 @@ int opensem(int i)
 	}
 	if(i==2)
 	{
-		if((sid=semget((key_t)SEMID2,0,0666))==-1)
+		if((sid=semget((key_t)SEMID2,0,IPC_CREAT|0666))==-1)
 		{
 			perror("oprn semget call failed\n");
 			return -1;

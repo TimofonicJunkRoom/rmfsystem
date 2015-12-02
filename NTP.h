@@ -137,7 +137,7 @@ int time_init(void)
 	tv1.tv_usec = 0;
 //	printf("%d\n",(int)tv1.tv_sec);
 	settimeofday(&tv1, NULL);
-	system("hwclock -w");
+//	system("hwclock -w");
 	system("date");
 	free(server_t);
 	return 0;

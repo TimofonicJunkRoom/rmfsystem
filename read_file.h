@@ -128,3 +128,9 @@ void read_file(char *part1,char*part2,char*value)
 {
 	GetProfileString("./device.config",part1,part2,value);
 }
+
+void read_file_v1(char *part1,char*part2,char*value)
+{
+	GetProfileString("./config",part1,part2,value);
+}
+

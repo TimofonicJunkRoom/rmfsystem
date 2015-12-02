@@ -6,7 +6,7 @@
 #       @author       :Ling hao
 #       @qq           :119642282@qq.com
 #       @file         :/home/lhw4d4/project/git/rmfsystem\client_pipe.c
-#       @date         :2015-10-07 19:38
+#       @date         :2015-11-30 22:52
 #       @algorithm    :
 =========================================================================*/
 #include <sys/types.h>
@@ -44,7 +44,7 @@
 #else
 #define DEBUG(format,...)
 #endif
-#define HOST_ADDRESS "192.168.0.214"
+#define HOST_ADDRESS "192.168.0.92"
 //#define HOST_ADDRESS "192.168.42.21"
 #define REAL_TIME "real_time.xml"
 #define FIFO_NAME "/tmp/my_fifo"
@@ -60,6 +60,7 @@ int update_data_2(int);
 int first_login();
 int login();
 void dbrecord(char*);
+void dbrecord_v2(char*);
 int get_line(int sock,char *buf,int size);
 int change_file_single_value(char*buf);
 int change_file(char*buf);
@@ -220,8 +221,7 @@ int update_data_1(int number)
 		}
 		if(stmt3)
 			sqlite3_finalize(stmt3);
-		sqlite3_close(db);
-		DEBUG("PREPARE ERROR!");
+		DEBUG("PREPARE ERROR");
 		exit(1);
 	}
 	sqlite3_bind_int(stmt3,1,number);
@@ -715,25 +715,22 @@ void main()
 
 int conn()
 {
+	int init;
 	int fd;
 	char*p;
-	FILE *fp;
-	char temp[4096];
-	fp=fopen(CONFIG,"r");
-	fgets(temp,4096,fp);
-	fclose(fp);
-	if(strncmp(temp,"init",4)==0)
+	char temp[32];
+	read_file_v1("login","init",temp);
+	init=atoi(temp);
+	printf("init=%d\n",init);
+	if(init==0)
+		first_login();
+	fd=login();
+	if(fd<=0)
 	{
-		p=strchr(temp,'=');
-		p++;
-//		printf("1\n");
-		if(strncmp(p,"1",1)!=0)
-		{
-			first_login();
-		}	
-		fd=login();
+		DEBUG("CONNECT ERROR");
+		exit(1);
 	}
-	printf("remote:conn ok\n");
+	printf("remote:conn ok%d\n",fd);
 	return fd;
 }
 
@@ -891,6 +888,7 @@ int first_login()
 
 int login()
 {
+	char real_time_pro[20*1024];
 	char value[20];
 	int flag=0;
 	struct timeval timeo;
@@ -914,12 +912,17 @@ int login()
 	len = sizeof(address);
 	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
 	result = connect(fd, (struct sockaddr *)&address, len);
+//	printf("result=%d\n",result);
 	while(1)
 	{
 		if(result!=-1)
+		{
+		//	printf("connect ok!\n");
 			break;
+		}
 		while(i<=20)
-		{	
+		{
+			printf("try:%d time\n",i);
 			result = connect(fd, (struct sockaddr *)&address, len);
 			if(result!=-1)
 				break;
@@ -928,7 +931,7 @@ int login()
 		if(result==-1)
 		{
 			DEBUG("CONNECT ERROR");
-			dbrecord("NETWORK ABNORMAL");
+			dbrecord_v2("NETWORK ABNORMAL");
 			addoraltconfig(DEV_CONF,"setting","setting=2");
 			send_signal();
 		}
@@ -940,8 +943,9 @@ int login()
 	}
 	if(result!=-1)
 	{
-		dbrecord("NETWORK NORMAL");
+		dbrecord_v2("NETWORK NORMAL");
 		read_file("setting","setting",value);
+//		printf("1\r\n");
 		result=atoi(value);
 		if(result!=0)
 		{
@@ -951,7 +955,7 @@ int login()
 	}
 
 //	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
-//	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
+	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 //	int keepalive=1;
 //	int keepidle=2;
 //	int keepinternal=5;
@@ -960,9 +964,11 @@ int login()
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPIDLE,(void *)&keepidle,sizeof(keepidle));
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPINTVL,(void *)&keepinternal,sizeof(keepinternal));
 //	setsockopt(fd,SOL_SOCKET,TCP_KEEPCNT,(void *)&keepcount,sizeof(keepcount));
-	printf("remote:local CONNECTION!\n");
+	printf("remote:local CONNECTION!xx\n");
 	snprintf(write_buf,4096,"RCON 002\r\nlength=0\r\n\r\n");
+//	printf("write_buf=%s",write_buf);
 	rc=write(fd,write_buf,strlen(write_buf));
+	printf("rc=%d\n",rc);
 	if(rc<=0)
 	{
 		DEBUG("WRITE ERROR");
@@ -990,11 +996,12 @@ int login()
 //	strcat(write_buf,temp);//!
 //	fgets(temp,4096,fp);//!
 //	fclose(fp);
-	read_file("login","username",name);
-	read_file("login","password",password);
+	read_file_v1("login","username",name);
+	read_file_v1("login","password",password);
 	base64_encode_v2(password,encrypt,strlen(password));
 	sprintf(temp,"username=%s\r\npassword=%s\r\nlength=0\r\n\r\n",name,encrypt);
-
+	printf("%s\r\n",temp);
+	strcpy(username,name);
 	strcat(write_buf,temp);//!
 //	write_buf[strlen(write_buf)-1]='\0';
 //	strcat(write_buf,"length=0\r\n\r\n");
@@ -1035,29 +1042,29 @@ int login()
 			p++;
 			write_buf[strlen(write_buf)-1]='\0';
 			len=atoi(p);
-//			printf("len=%d\n",len);
+			printf("len=%d\n",len);
 		}
 	}
 	memset(read_buf,'\0',sizeof(read_buf));
 	i=0;
 	while(1)
 	{
-		
+		memset(temp,'\0',4096);
 		length=read(fd,temp,4096);
-//		printf("%d\n",length);
-		if((length!=0)&&length<=len)
+		printf("x:%d\n",length);
+		if((length!=0)&&(length<=len))
 		{
 //			printf("length=%d\n",length);
-			memcpy(read_buf+i,temp,length);
+			memcpy(real_time_pro+i,temp,length);
 			i=i+length;
 			len=len-length;
 		}
 		if(len==0)
 			break;
 	}
-//	printf("len=%d\n",len);
+	printf("len=%d\n",len);
 	fp=fopen(REAL_TIME,"w");
-	fputs(read_buf,fp);
+	fputs(real_time_pro,fp);
 	fclose(fp);
 	printf("remote:local connection ok\n");
 	return fd;
@@ -1291,8 +1298,9 @@ int send_level2(struct msg_remote data)
 int send_level3(struct msg_remote data)
 {
 	int rc;
-	char sendbuf[512];
+	char sendbuf[2048];
 	sprintf(sendbuf,"DATA 002\r\nusername=%s\r\ndate=%s\r\nlength=%d\r\nnumber=%d\r\ndatatype=plc\r\ndatalevel=1\r\n\r\n",username,data.time,data.length,data.number);
+//	printf("%s\r\n",sendbuf);
 	rc=write(socketfd,sendbuf,strlen(sendbuf));
 	if(rc<=0)
 	{
@@ -1519,6 +1527,29 @@ void gettime(char *datetime)
 	return;
 }
 
+void dbrecord_v2(char* state)
+{
+	int rc;
+	char sql[256];
+	char * errmsg=0;
+	char time[100];
+	gettime(time);
+	sprintf(sql,"insert into device_running_statement values(\"%s\",\"%s\")",time,state);
+	while(1)
+	{
+		rc=sqlite3_exec(db,sql,0,0,&errmsg);
+		if(rc!=SQLITE_OK)
+		{
+			if(rc==SQLITE_BUSY)
+				continue;
+			DEBUG("REMOTE RECORD ERROR");
+			exit(1);
+		}
+		else
+			break;
+	}
+	return;
+}
 
 void dbrecord(char* state)
 {
@@ -1550,7 +1581,7 @@ void dbrecord(char* state)
 			break;
 	}
 	sqlite3_finalize(stmt);
-	sqlite3_close(db);
+//	sqlite3_close(db);
 	return;
 }
 

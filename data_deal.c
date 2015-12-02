@@ -166,6 +166,7 @@ int msg_recv(int msgid,struct msg_local*data)
 	int ret;
 	int length;
 	length=sizeof(struct msg_local)-sizeof(long);
+//	printf("lxxength=%d\n",length);
 //	printf("1\n");
 //	printf("waiting for recv\n");
 	if((ret=msgrcv(msgid,(void*)data,length,0,0))==-1)
@@ -303,7 +304,7 @@ void* first_level_deal()
 	msg_init();
 	while(1)
 	{
-//		printf("1\n");
+//		printf("msg_local=%d\n",msg_local);
 		msg_recv(msg_local,&data);
 		gettime(time);
 		INC(count1);
@@ -311,7 +312,7 @@ void* first_level_deal()
 		data1.number=count1;
 		data1.length=data.length;
 		strcpy(data1.time,time);
-//		printf("length=%d\n",data.length);
+//		printf("lengtmmxxh=%d\n",data.length);
 		memcpy(data1.data,data.data,data.length);
 		insert(&data1);
 		if(!real_time&&!networkflag)

@@ -258,7 +258,7 @@ void xml_read(int partid)
 	xmlNodePtr detail;
 	xmlKeepBlanksDefault(0); //take care!
 	doc=xmlParseFile(REAL_TIME);
-	sprintf(xml,"Section%d",partid);
+	sprintf(xml,"section%d",partid);
 	while(i<REAL_TIME_NUM)
 	{
 		real_time_loc[i].used=0;
@@ -294,15 +294,36 @@ void xml_read(int partid)
 			while(sensorcur!=NULL)
 			{
 				real_time_loc[i].used=1;
-				if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"Sensor"))
+				if(!xmlStrcmp(sensorcur->name,(const xmlChar*)"sensor"))
 				{
 			//		printf("google\n");
-					value=xmlGetProp(sensorcur,"SensorOffset");
-					real_time_loc[i].offset=atoi(value);
-					value=xmlGetProp(sensorcur,"SensorLoc");
-					real_time_loc[i].location=atoi(value);
-					value=xmlGetProp(sensorcur,"DataLen");
-					real_time_loc[i].length=atoi(value);
+					value=xmlGetProp(sensorcur,"valueType");
+					if(!strcmp(value,"BOOL"))
+					{
+						value=xmlGetProp(sensorcur,"dataLoc");
+						real_time_loc[i].location=atoi(value);
+						value=xmlGetProp(sensorcur,"offset");
+						real_time_loc[i].offset=atoi(value);
+						real_time_loc[i].length=0;
+					}
+					else if(!strcmp(value,"INT"))
+					{
+						value=xmlGetProp(sensorcur,"dataLoc");
+						real_time_loc[i].location=atoi(value);
+						real_time_loc[i].length=2;
+					}
+					else if(!strcmp(value,"REAL"))
+					{
+						value=xmlGetProp(sensorcur,"dataLoc");
+						real_time_loc[i].location=atoi(value);
+						real_time_loc[i].length=4;
+					}
+					else if(!strcmp(value,"WORD"))
+					{
+						value=xmlGetProp(sensorcur,"dataLoc");
+						real_time_loc[i].location=atoi(value);
+						real_time_loc[i].length=2;
+					}
 					i++;
 				}
 				sensorcur=sensorcur->next;
@@ -680,7 +701,10 @@ void *second_level_recv()
 	shared=(struct shm_local *)shmaddr;
 	shared->written=0;
 	if((semid=creatsem(1))==-1)
+	{
+		DEBUG("creatsem error");
 		exit(1);
+	}
 	if(access(FIFO_NAME,F_OK)==-1)
 	{
 		if((mkfifo(FIFO_NAME,0666)<0)&&(errno!=EEXIST))
@@ -779,32 +803,36 @@ void *second_level_recv()
 
 int real_time_select(unsigned char*data,unsigned char *real)
 {
-	int count=0;
+	int simucount=0;
+	int bitcount=0;
+	unsigned char *p;
 	int i=0;
-	unsigned char bit[2];
+	unsigned int value=0;
+	unsigned char simu[128];
 	int bito[8]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 	for(;real_time_loc[i].used!=0;i++)
 	{
 		switch(real_time_loc[i].length)
 		{
-			case 1:
-				memset(bit,0,2);
-				memcpy(bit+1,data+real_time_loc[i].location,1);
-				bit[1]=bit[1] & bito[real_time_loc[i].offset];
-				memcpy(real+count,bit,2);
-				count+=2;
+			case 0:
+				if(*(p+real_time_loc[i].location)&bito[real_time_loc[i].offset])
+					value=value|(1<<bitcount);
+				bitcount++;
 				break;
-			case 16:
-				memcpy(real+count,data+real_time_loc[i].location,real_time_loc[i].length);
-				count+=2;
+			case 2:
+				memcpy(simu+simucount,data+real_time_loc[i].location,real_time_loc[i].length);
+				simucount+=2;
 				break;
-			case 32:
-				memcpy(real+count,data+real_time_loc[i].location,real_time_loc[i].length);
-				count+=4;
+			case 4:
+				memcpy(simu+simucount,data+real_time_loc[i].location,real_time_loc[i].length);
+				simucount+=4;
 			break;
 		}
 	}
-	return count;
+	memcpy(real,&value,4);
+	p=real;
+	memcpy(p+4,simu,simucount);
+	return (simucount+4);
 }
 
 int tcp_receive(int fd,unsigned char *data)

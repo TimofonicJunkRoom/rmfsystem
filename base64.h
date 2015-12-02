@@ -1,3 +1,5 @@
+#ifndef BASE64_H
+#define BASE64_H
 #include <stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -87,3 +89,4 @@ void main()
 	return;
 }
 */
+#endif

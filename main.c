@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include "init.h"
+#include "ntp.h"
 
 void dbinit(void);
 void gettime(char*);
@@ -31,6 +32,7 @@ int main()
 	int rc;
 	int status;
 	init();
+	ntp();
 	dbrecord("START");
 	pid_t temp;
 	while(1)

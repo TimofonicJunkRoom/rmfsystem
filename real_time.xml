@@ -1,17 +1,153 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <Section1>
-    <Sensor SensorLoc="0" SensorOffset="1" DataLen="4" />
-	<Sensor SensorLoc="4" SensorOffset="1" DataLen="4" />
-    <Sensor SensorLoc="8" SensorOffset="16" DataLen="4" />
-    <Sensor SensorLoc="12" SensorOffset="16" DataLen="4" />
-    <Sensor SensorLoc="16" SensorOffset="16" DataLen="4" />
-    <Sensor SensorLoc="20" SensorOffset="32" DataLen="4" />
-    <Sensor SensorLoc="24" SensorOffset="32" DataLen="4" />
-    <Sensor SensorLoc="28" SensorOffset="32" DataLen="4" />
-    <Sensor SensorLoc="32" SensorOffset="16" DataLen="4" />
-    <Sensor SensorLoc="36" SensorOffset="16" DataLen="4" />
-    <Sensor SensorLoc="40" SensorOffset="32" DataLen="4" />
-    <Sensor SensorLoc="44" SensorOffset="16" DataLen="4" />
-  </Section1>
+<section1>
+  <sensor dataLoc="458" valueType="REAL" />
+  <sensor dataLoc="583" valueType="REAL" />
+  <sensor dataLoc="130" valueType="INT" />
+  <sensor dataLoc="255" valueType="INT" />
+  <sensor dataLoc="755" valueType="INT" />
+  <sensor dataLoc="380" valueType="INT" />
+  <sensor dataLoc="908" valueType="INT" />
+  <sensor dataLoc="630" valueType="INT" />
+  <sensor dataLoc="505" valueType="INT" />
+  <sensor dataLoc="986" valueType="REAL" />
+  <sensor dataLoc="216" valueType="REAL" />
+  <sensor dataLoc="220" valueType="REAL" />
+  <sensor dataLoc="208" valueType="REAL" />
+  <sensor dataLoc="212" valueType="REAL" />
+  <sensor dataLoc="990" valueType="REAL" />
+</section1>
+<section2>
+  <sensor dataLoc="124" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="125" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="125" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="120" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="120" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="126" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="126" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="128" valueType="INT" />
+  <sensor dataLoc="130" valueType="INT" />
+  <sensor dataLoc="132" valueType="INT" />
+  <sensor dataLoc="134" valueType="INT" />
+  <sensor dataLoc="216" valueType="REAL" />
+  <sensor dataLoc="220" valueType="REAL" />
+  <sensor dataLoc="208" valueType="REAL" />
+  <sensor dataLoc="212" valueType="REAL" />
+</section2>
+<section3>
+  <sensor dataLoc="495" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="496" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="497" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="497" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="499" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="499" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="499" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="125" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="125" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="503" valueType="INT" />
+  <sensor dataLoc="505" valueType="INT" />
+  <sensor dataLoc="507" valueType="INT" />
+  <sensor dataLoc="509" valueType="INT" />
+  <sensor dataLoc="583" valueType="REAL" />
+  <sensor dataLoc="587" valueType="REAL" />
+</section3>
+<section4>
+  <sensor dataLoc="749" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="746" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="747" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="1023" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="748" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="749" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="745" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="124" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="753" valueType="INT" />
+  <sensor dataLoc="755" valueType="INT" />
+  <sensor dataLoc="757" valueType="INT" />
+  <sensor dataLoc="759" valueType="INT" />
+  <sensor dataLoc="773" valueType="WORD" />
+  <sensor dataLoc="775" valueType="WORD" />
+</section4>
+<section5>
+  <sensor dataLoc="371" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="371" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="372" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="372" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="374" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="375" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="375" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="376" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="376" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="378" valueType="INT" />
+  <sensor dataLoc="380" valueType="INT" />
+  <sensor dataLoc="382" valueType="INT" />
+  <sensor dataLoc="384" valueType="INT" />
+  <sensor dataLoc="458" valueType="REAL" />
+  <sensor dataLoc="398" valueType="WORD" />
+  <sensor dataLoc="400" valueType="WORD" />
+</section5>
+<section6>
+  <sensor dataLoc="885" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="885" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="885" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="886" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="886" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="886" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="886" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="887" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="887" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="887" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="887" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="888" offSet="1" valueType="BOOL" />
+  <sensor dataLoc="888" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="888" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="906" valueType="INT" />
+  <sensor dataLoc="908" valueType="INT" />
+  <sensor dataLoc="910" valueType="INT" />
+  <sensor dataLoc="912" valueType="INT" />
+  <sensor dataLoc="926" valueType="WORD" />
+  <sensor dataLoc="928" valueType="WORD" />
+  <sensor dataLoc="986" valueType="REAL" />
+  <sensor dataLoc="990" valueType="REAL" />
+</section6>
+<section7>
+  <sensor dataLoc="246" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="247" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="248" offSet="7" valueType="BOOL" />
+  <sensor dataLoc="245" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="620" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="621" offSet="0" valueType="BOOL" />
+  <sensor dataLoc="621" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="622" offSet="2" valueType="BOOL" />
+  <sensor dataLoc="622" offSet="3" valueType="BOOL" />
+  <sensor dataLoc="622" offSet="4" valueType="BOOL" />
+  <sensor dataLoc="622" offSet="5" valueType="BOOL" />
+  <sensor dataLoc="622" offSet="6" valueType="BOOL" />
+  <sensor dataLoc="253" valueType="INT" />
+  <sensor dataLoc="255" valueType="INT" />
+  <sensor dataLoc="257" valueType="INT" />
+  <sensor dataLoc="259" valueType="INT" />
+  <sensor dataLoc="628" valueType="INT" />
+  <sensor dataLoc="630" valueType="INT" />
+  <sensor dataLoc="632" valueType="INT" />
+  <sensor dataLoc="634" valueType="INT" />
+  <sensor dataLoc="708" valueType="REAL" />
+</section7>
 </root>

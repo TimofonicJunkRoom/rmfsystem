@@ -25,7 +25,7 @@
 #include"read_file.h"
 #include"change_profile.h"
 
-#define TCP_PORT 10001
+#define TCP_PORT 2000
 #define MAXSIZE 100
 
 int sock_connect(char *address)
@@ -134,7 +134,7 @@ int scanip()
 		rc=sock_connect(address);
 		if(rc>0)
 		{
-			printf("1\n");
+		//	printf("1\n");
 			goto done;
 		}
 	}
@@ -153,16 +153,23 @@ done:
 }
 
 
-int main()
+int scan()
 {
 	int sockfd;
-	sockfd=scanip();
-	if(sockfd==0)
+	while(1)
 	{
-		printf("cannot match\n");
-		exit(1);
+	
+		sockfd=scanip();
+		if(sockfd==0)
+		{
+			printf("cannot match\n");
+		}
+		else 
+		{
+			printf("scan success\n");
+			break;
+		}
+		sleep(60);
 	}
-	else 
-		printf("success\n");
 
 }
