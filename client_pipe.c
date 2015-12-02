@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <limits.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -722,6 +723,7 @@ int conn()
 
 int first_login()
 {
+	char value[30];
 	struct timeval timeo;
 	timeo.tv_sec=5;
 	timeo.tv_usec=0;
@@ -732,10 +734,23 @@ int first_login()
 	int result;
 	FILE *fp;
 	char *p,ptr[4096];
+	struct hostent *he;
+	read_file("SERV_ADDR","address",value);
+	if(inet_addr(value)==INADDR_NONE)
+	{
+		he=gethostbyname(value);
+		if(!he)
+		{
+			DEBUG("GETHOSTBYNAME ERROR");
+			exit(1);
+		}
+		strcpy(value,he->h_addr_list[0]);
+	}
+	printf("value=%s\n",value);
 	char write_buf[4096],read_buf[4096],file_buf[4096],temp[4096];
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr(HOST_ADDRESS);
+	address.sin_addr.s_addr = inet_addr(value);
 	address.sin_port = htons(13000);
 	len = sizeof(address);
 	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
@@ -875,7 +890,7 @@ int first_login()
 int login()
 {
 	char real_time_pro[20*1024];
-	char value[20];
+	char value[30];
 	int flag=0;
 	struct timeval timeo;
 	int rc;
@@ -890,10 +905,23 @@ int login()
 	char *p,*ptr;
 	timeo.tv_sec=5;
 	timeo.tv_usec=0;
+	struct hostent *he;
 	char write_buf[4096],read_buf[4096],file_buf[4096],temp[4096];
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = inet_addr(HOST_ADDRESS);
+	read_file("SERV_ADDR","address",value);
+	if(inet_addr(value)==INADDR_NONE)
+	{
+		he=gethostbyname(value);
+		if(!he)
+		{
+			DEBUG("GETHOSTBYNAME ERROR");
+			exit(1);
+		}
+		strcpy(value,he->h_addr_list[0]);
+	}
+	printf("value=%s\n",value);
+	address.sin_addr.s_addr = inet_addr(value);
 	address.sin_port = htons(13000);
 	len = sizeof(address);
 	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));

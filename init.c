@@ -15,6 +15,7 @@
 #include "mini-ntpclient.h"
 #include "read_file.h"
 #include "change_profile.h"
+#include "scan.h"
 
 void db_init()
 {
@@ -158,6 +159,7 @@ void profile_process()
 
 void init()
 {
+	scan();
 	ntp();
 	db_init();
 	profile_init();

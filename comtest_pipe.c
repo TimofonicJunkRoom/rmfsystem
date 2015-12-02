@@ -79,12 +79,14 @@ void write_pid_local()
 int tcp_connect()
 {
 	int client_sockfd;
+	char value[20];
 	int client_len;
 	struct sockaddr_in client_address;
 	int result,i=0;
+	read_file("PLC_INFO","address",value);
 	client_sockfd=socket(AF_INET,SOCK_STREAM,0);
 	client_address.sin_family=AF_INET;
-	client_address.sin_addr.s_addr=inet_addr(PLC_ADDR);
+	client_address.sin_addr.s_addr=inet_addr(value);
 	client_address.sin_port=htons(TCP_PORT);
 	client_len=sizeof(client_address);
 	do
