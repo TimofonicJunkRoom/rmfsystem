@@ -141,3 +141,8 @@ void read_file_v1(char*part1,char*part2,char*value)
 {
 	GetProfileString("./config",part1,part2,value);
 }
+
+void read_file_v2(char*part1,char*part2,char*value)
+{
+	GetProfileString("./process.config",part1,part2,value);
+}

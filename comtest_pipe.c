@@ -83,7 +83,8 @@ int tcp_connect()
 	int client_len;
 	struct sockaddr_in client_address;
 	int result,i=0;
-	read_file("PLC_INFO","address",value);
+	read_file("PLC_INFO","plcaddress",value);
+	printf("value=%s\n",value);
 	client_sockfd=socket(AF_INET,SOCK_STREAM,0);
 	client_address.sin_family=AF_INET;
 	client_address.sin_addr.s_addr=inet_addr(value);
@@ -102,7 +103,9 @@ int tcp_connect()
 		DEBUG("connect error");
 		exit(1);
 	}
+	printf("local:connect PLC OK!\n");
 	return client_sockfd;
+	
 }
 /*
 void real_time_deal()
@@ -197,7 +200,7 @@ void *signal_wait(void *arg)
 				real_time_data=atoi(value);
 				if(real_time_data!=0)
 				{
-					printf("local:read_xml\n");
+//					printf("local:read_xml\n");
 					xml_read(real_time_data);
 					real_time_data=1;
 				}
@@ -266,7 +269,7 @@ void xml_read(int partid)
 					{
 						value=xmlGetProp(sensorcur,"dataLoc");
 						real_time_loc[i].location=atoi(value);
-						value=xmlGetProp(sensorcur,"offset");
+						value=xmlGetProp(sensorcur,"offSet");
 						real_time_loc[i].offset=atoi(value);
 						real_time_loc[i].length=0;
 					}
@@ -295,6 +298,7 @@ void xml_read(int partid)
 		}
 		cur=cur->next;
 	}
+	printf("local:read xml ok\n");
 }
 
 void msg_init()
@@ -701,13 +705,16 @@ void *second_level_recv(void *arg)
 		//	printf("length=%d\n",length);
 			while(1)
 			{
+//				printf("1\n");
+				if(real_time_data)
+					break;
 				sem_p(semid);
 				if(shared->written==0)
 				{
 					memcpy(shared->data,second_data,length);
 					shared->length=length;
 					shared->written=1;
-				//	printf("	send shm data ok\n");
+			//		printf("	send shm data ok\n");
 					flag=1;
 				}
 				sem_v(semid);
@@ -736,7 +743,9 @@ void *second_level_recv(void *arg)
 			}
 			printf("local:real_time\n");
 			length=tcp_receive(fd,second_data);
+	//		printf("xxxc\n");
 			length=real_time_select(second_data,real_time);
+	//		printf("length=%d\n",length);
 			if(length<=0)
 			{
 				DEBUG("select error");
@@ -771,11 +780,13 @@ int real_time_select(unsigned char*data,unsigned char *real)
 	int bitcount=0;
 	unsigned char *p;
 	int i=0;
+	p=data;
 	unsigned int value=0;
 	unsigned char simu[128];
 	int bito[8]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 	for(;real_time_loc[i].used!=0;i++)
 	{
+	//	printf("leng=%d\n",real_time_loc[i].length);
 		switch(real_time_loc[i].length)
 		{
 			case 0:

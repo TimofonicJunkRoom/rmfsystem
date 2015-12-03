@@ -94,8 +94,10 @@ void *signal_wait(void *arg)
 					real_time=1;
 				break;
 			case SIGUSR1:
+			//	printf("1\n");
 				read_file("setting","setting",value);
 				result=atoi(value);
+				printf("deal:network\n");
 				if(result==2)
 				{
 					if(networkflag)
@@ -294,6 +296,7 @@ void* first_level_deal(void *arg)
 //		printf("lengtmmxxh=%d\n",data.length);
 		memcpy(data1.data,data.data,data.length);
 		insert(&data1);
+//		printf("1isnert\n");
 		if(!real_time&&!networkflag)
 		{
 			msg_send(msg_remote,&data1);
@@ -349,12 +352,12 @@ void*second_level_deal(void *arg)
 	temp->written=0;
 	while(1)
 	{
-//		printf("count2=%d\n",count2);
+//		printf("networdflag=%d\n",networkflag);
 		if(sem_p(semid)==-1)
 			break;
 		if(shm_data->written!=0)
 		{
-	//		printf("xx\n");
+//			printf("xx\n");
 			length=shm_data->length;
 			memcpy(buff,shm_data->data,length);
 			shm_data->written=0;
@@ -365,6 +368,7 @@ void*second_level_deal(void *arg)
 		sem_v(semid);
 		if(flag)
 		{
+//			printf("2insert\n");
 			gettime(time);
 			INC(count2);
 			insert_second(count2,time,buff,length);
@@ -373,7 +377,7 @@ void*second_level_deal(void *arg)
 			usleep(100000);
 		while(flag&&!networkflag)
 		{
-//			printf("ma\n");
+	//		printf("ma\n");
 			if(sem_p(semid2)==-1)
 				exit(1);
 			if(temp->written==0)
@@ -407,6 +411,7 @@ int main()
 	sigemptyset(&set);
 //	printf("1\n");
 	sigaddset(&set,SIGUSR2);
+	sigaddset(&set,SIGUSR1);
 	err=pthread_sigmask(SIG_BLOCK,&set,NULL);
 	if(err!=0)
 	{

@@ -41,34 +41,6 @@ int datalevel1;
 int datalevel2;
 int confirm=0;
 int real_time=0;
-int conn();
-int update_data_1(int);
-int update_data_2(int);
-int first_login();
-int login();
-void dbrecord(char*);
-void dbrecord_v2(char*);
-int get_line(int sock,char *buf,int size);
-int change_file_single_value(char*buf);
-int change_file(char*buf);
-int change_config(char*,char *);
-int recv_fork();
-int insert_command(int,char*,char*,char*);
-int send_fork();
-void handler();
-void send_data();
-void gettime(char*);
-void msg_init(void);
-int msg_recv(struct msg_remote*);
-void * remote_recv();
-void * remote_send();
-int device_change();
-int real_time_data();
-int recv_error();
-void dbinit();
-int send_signal();
-int msg_send(struct msg_remote*);
-int send_signal_usr2();
 
 int socketfd;
 sqlite3*db;
@@ -112,30 +84,30 @@ void write_pid_remote()
 //	printf("write process.config ok\n");
 	return;
 }
-
-int send_signal()
+/*
+ *state:
+ *1:change the collecting rate
+ *2:something happened in network
+ */
+int send_signal(int state)
 {
+
 	int ret;
 	int pid;
 	char *p;
 	char line[100];
-	FILE*fp;
-	if((fp=fopen(PRO_CONF,"r"))==NULL)
+	if(state==1)
 	{
-		DEBUG("OPEN ERROR");
-		return 0;
+		read_file_v2("pid","local_pid",line);
+		pid=atoi(line);
 	}
-	while((fgets(line,sizeof(line),fp))!=NULL)
+	else if(state==2)
 	{
-		if(strncmp(line,"local_pid",9)==0)
-		{
-			p=strchr(line,'=');
-			p++;
-			line[strlen(line)-1]='\0';
-			pid=atoi(p);
-		}
+		read_file_v2("pid","deal_pid",line);
+		pid=atoi(line);
 	}
 	ret=kill((pid_t)pid,SIGUSR1);
+	printf("remote:send signal SIGUSR1\n");
 	if(ret==0)
 		return 1;
 	else 
@@ -389,7 +361,7 @@ int device_change()
 	insert_command(n,time,command,commandline);
 	addoraltconfig(DEV_CONF,"setting","setting=1");
 	addoraltconfig(DEV_CONF,parameter,commandline);
-	send_signal();
+	send_signal(1);
 	msg_data.mtype=1;
 	strcpy(msg_data.command,"2120");
 	msg_data.number=commandnumber;
@@ -493,6 +465,12 @@ void * remote_recv(void*arg)
 //		printf("1\n");
 		rc=get_line(socketfd,recvbuff,sizeof(recvbuff));
 //		printf("recvbuff=%s\n",recvbuff);
+		printf("rc=%d\n",rc);
+		if(rc==0)
+		{
+			DEBUG("RECV ERROR");
+			exit(1);
+		}
 		if(strncmp(recvbuff,"CHAG",4)==0)
 		{
 			printf("change profile\n");
@@ -594,7 +572,7 @@ int real_time_data()
 		else 
 			break;
 	}
-//	printf("parameter=%d\n",parameter);
+	printf("parameter=%d\n",parameter);
 	if(c!=d)
 	{
 		real_time=(real_time?0:1);
@@ -735,7 +713,7 @@ int first_login()
 	FILE *fp;
 	char *p,ptr[4096];
 	struct hostent *he;
-	read_file("SERV_ADDR","address",value);
+	read_file("SERV_ADDR","servaddress",value);
 	if(inet_addr(value)==INADDR_NONE)
 	{
 		he=gethostbyname(value);
@@ -909,7 +887,7 @@ int login()
 	char write_buf[4096],read_buf[4096],file_buf[4096],temp[4096];
 	fd = socket(AF_INET, SOCK_STREAM, 0);
 	address.sin_family = AF_INET;
-	read_file("SERV_ADDR","address",value);
+	read_file("SERV_ADDR","servaddress",value);
 	if(inet_addr(value)==INADDR_NONE)
 	{
 		he=gethostbyname(value);
@@ -920,11 +898,12 @@ int login()
 		}
 		strcpy(value,he->h_addr_list[0]);
 	}
-	printf("value=%s\n",value);
+//	printf("value=%s\n",value);
 	address.sin_addr.s_addr = inet_addr(value);
 	address.sin_port = htons(13000);
 	len = sizeof(address);
-	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
+//	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
+//	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 	result = connect(fd, (struct sockaddr *)&address, len);
 //	printf("result=%d\n",result);
 	while(1)
@@ -936,23 +915,25 @@ int login()
 		}
 		while(i<=20)
 		{
-			printf("try:%d time\n",i);
+			printf("try: %d times\n",i);
 			result = connect(fd, (struct sockaddr *)&address, len);
 			if(result!=-1)
 				break;
-			sleep(++i*3);
+			sleep(1);
+			i++;
 		}
 		if(result==-1)
 		{
 			DEBUG("CONNECT ERROR");
 			dbrecord_v2("NETWORK ABNORMAL");
 			addoraltconfig(DEV_CONF,"setting","setting=2");
-			send_signal();
+		//	printf("xx\n");
+			send_signal(2);
 		}
 		while((i>20)&&(result==-1))
 		{
 			result=connect(fd,(struct sockaddr*)&address,len);
-			sleep(i*3);
+			sleep(2);
 		}
 	}
 	if(result!=-1)
@@ -964,12 +945,12 @@ int login()
 		if(result!=0)
 		{
 			addoraltconfig(DEV_CONF,"setting","setting=0");
-			send_signal();
+			send_signal(2);
 		}
 	}
 
 //	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
-	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
+//	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 //	int keepalive=1;
 //	int keepidle=2;
 //	int keepinternal=5;
@@ -1065,7 +1046,7 @@ int login()
 	{
 		memset(temp,'\0',4096);
 		length=read(fd,temp,4096);
-		printf("x:%d\n",length);
+	//	printf("%d\n",length);
 		if((length!=0)&&(length<=len))
 		{
 //			printf("length=%d\n",length);
@@ -1077,9 +1058,9 @@ int login()
 			break;
 	}
 	printf("len=%d\n",len);
-	fp=fopen(REAL_TIME,"w");
-	fputs(real_time_pro,fp);
-	fclose(fp);
+//	fp=fopen(REAL_TIME,"w");
+//	fputs(real_time_pro,fp);
+//	fclose(fp);
 	printf("remote:local connection ok\n");
 	return fd;
 }
@@ -1373,7 +1354,7 @@ void *remote_send(void *arg)
 	{
 		while(real_time)
 		{
-		//	printf("haha\n");
+//			printf("haha\n");
 			if(!init)
 			{
 				pipe_fd=open(FIFO_NAME,O_RDONLY);
@@ -1436,7 +1417,7 @@ void *remote_send(void *arg)
 
 		while(!real_time)
 		{
-		//	printf("gaga\n");
+//			printf("gaga\n");
 			if(msg_recv(&gpsdata))
 			{
 //				printf("%ld length=%d\n",gpsdata.mtype,gpsdata.length);
@@ -1456,16 +1437,16 @@ void *remote_send(void *arg)
 				break;
 			if(getsem(semid))
 			{
-		//		printf("4\n");
+//				printf("4\n");
 				if(sem_p(semid)!=-1)
 				{
-			//		printf("5\n");
+//					printf("5\n");
 					if(p->written!=0)
 					{
 						memcpy(&sdata,p,sizeof(struct shm_remote));
 						p->written=0;
 						flag=1;
-					//	printf("6\n");
+//						printf("6\n");
 					}
 					else
 						flag=0;

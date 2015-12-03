@@ -110,7 +110,7 @@ int scanip()
 	struct sockaddr_in servaddr,peersock;
 	length=sizeof(peersock);
 	int  error=0;
-	read_file("PLC_INFO","address",address);
+	read_file("PLC_INFO","plcaddress",address);
 	printf("address=%s\n",address);
 	if(strlen(address)>7)
 	{
@@ -125,7 +125,7 @@ int scanip()
 	printf("scan begin!~~~~~~~~~~~\n");	
 	for(;i<255;i++)
 	{
-		sprintf(address,"192.168.1.%d",i);
+		sprintf(address,"192.168.0.%d",i);
 		printf("%s\n",address);
 		rc=sock_connect(address);
 		if(rc>0)
@@ -140,8 +140,8 @@ done:
 		flag=fcntl(sockfd,F_GETFL,0);
 		fcntl(rc,F_SETFL,flag&~O_NONBLOCK);
 		printf("scan successfully!\naddr:%s\nport:%d\n",address,TCP_PORT);
-		sprintf(temp,"address=%s",address);
-		addoraltconfig("./device.config","address",temp);
+		sprintf(temp,"plcaddress=%s",address);
+		addoraltconfig("./device.config","plcaddress",temp);
 		return rc;
 	}
 	else
@@ -163,6 +163,7 @@ int scan()
 		else 
 		{
 			printf("scan success\n");
+			close(sockfd);
 			break;
 		}
 		sleep(60);

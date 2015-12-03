@@ -27,7 +27,7 @@ int creatsem(int i)
 	{
 		if((sid=semget((key_t)SEMID,1,IPC_CREAT|0666))==-1)
 		{
-			perror("semget call failed\n");
+			DEBUG("SEMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
@@ -35,7 +35,7 @@ int creatsem(int i)
 	{
 		if((sid=semget((key_t)SEMID2,1,IPC_CREAT|0666))==-1)
 		{
-			perror("shmget call failed\n");
+			DEBUG("SEMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
@@ -49,17 +49,17 @@ int opensem(int i)
 	int sid;
 	if(i==1)
 	{
-		if((sid=semget((key_t)SEMID,0,0666|IPC_CREAT))==-1)
+		if((sid=semget((key_t)SEMID,0,0666))==-1)
 		{
-			perror("open semget call failed\n");
+			DEBUG("SEMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
 	if(i==2)
 	{
-		if((sid=semget((key_t)SEMID2,0,IPC_CREAT|0666))==-1)
+		if((sid=semget((key_t)SEMID2,0,0666))==-1)
 		{
-			perror("oprn semget call failed\n");
+			DEBUG("SEMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
@@ -72,7 +72,7 @@ int sem_p(int semid)
 	struct sembuf sbuf={0,-1,SEM_UNDO};
 	if(semop(semid,&sbuf,1)==-1)
 	{
-		perror(" wrong operation to semaphore occured\n");
+		DEBUG("SEMOP ERROR:%d",errno);
 		return -1;
 	}
 	return 0;
@@ -96,7 +96,7 @@ int sem_v(int semid)
 	struct sembuf sbuf={0,1,SEM_UNDO};
 	if(semop(semid,&sbuf,1)==-1)
 	{
-		perror("A wrong operation to semaphore occured\n");
+		DEBUG("SEMOP ERROR:%d",errno);
 		return -1;
 	}
 	return 0;
@@ -144,7 +144,7 @@ int creatshm(int i)
 	{
 		if((sid=shmget((key_t)SHMID,SHM_SIZE,IPC_CREAT|0666))==-1)
 		{
-			perror("shm call failed\n");
+			DEBUG("SHMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
@@ -152,7 +152,7 @@ int creatshm(int i)
 	{
 		if((sid=shmget((key_t)SHMID2,SHM_SIZE,IPC_CREAT|0666))==-1)
 		{
-			perror("shm call failed\n");
+			DEBUG("SHMGET ERROR:%d",errno);
 			return -1;
 		}
 	}
