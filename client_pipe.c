@@ -465,7 +465,7 @@ void * remote_recv(void*arg)
 //		printf("1\n");
 		rc=get_line(socketfd,recvbuff,sizeof(recvbuff));
 //		printf("recvbuff=%s\n",recvbuff);
-		printf("rc=%d\n",rc);
+//		printf("rc=%d\n",rc);
 		if(rc==0)
 		{
 			DEBUG("RECV ERROR");
@@ -919,8 +919,7 @@ int login()
 			result = connect(fd, (struct sockaddr *)&address, len);
 			if(result!=-1)
 				break;
-			sleep(1);
-			i++;
+			sleep(++i*3);
 		}
 		if(result==-1)
 		{
@@ -928,7 +927,7 @@ int login()
 			dbrecord_v2("NETWORK ABNORMAL");
 			addoraltconfig(DEV_CONF,"setting","setting=2");
 		//	printf("xx\n");
-			send_signal(2);
+			send_signal(i*3);
 		}
 		while((i>20)&&(result==-1))
 		{
