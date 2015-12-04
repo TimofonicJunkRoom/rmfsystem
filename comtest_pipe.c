@@ -11,6 +11,7 @@
 ==========================================================================*/
 #include "comtest_pipe.h"
 
+#include <netinet/tcp.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,8 +27,10 @@
 #include "change_profile.h"
 #include "plc_simulate.h"
 #include <libxml/xmlmemory.h>
+//#include "client_pipe.h"
 #include <libxml/parser.h>
 
+int plc_state=0;
 int real_time_data=0;
 int second_rate=1;
 int remote_msgid;
@@ -35,6 +38,22 @@ int local_msgid;
 struct plc_struct * plc_head=NULL;
 
 struct plc_loc real_time_loc[REAL_TIME_NUM];
+
+
+sqlite3 * db_init(void)
+{
+	sqlite3 * db;
+	char* errmsg;
+	int rc;
+	rc=sqlite3_open("local.db",&db);
+	if(rc!=SQLITE_OK)
+	{
+		DEBUG("cannot open db:%s",sqlite3_errmsg(db));
+		sqlite3_close(db);
+		exit(1);
+	}
+	return db;
+}
 
 void write_pid_local()
 {
@@ -78,29 +97,81 @@ void write_pid_local()
 
 int tcp_connect()
 {
+	sqlite3 * db;
 	int client_sockfd;
 	char value[20];
 	int client_len;
 	struct sockaddr_in client_address;
 	int result,i=0;
 	read_file("PLC_INFO","plcaddress",value);
-	printf("value=%s\n",value);
+//	printf("value=%s\n",value);
 	client_sockfd=socket(AF_INET,SOCK_STREAM,0);
 	client_address.sin_family=AF_INET;
 	client_address.sin_addr.s_addr=inet_addr(value);
 	client_address.sin_port=htons(TCP_PORT);
 	client_len=sizeof(client_address);
+/*
+	int keepAlive=1;
+	int keepIdle=5;
+	int keepInterval=3;
+	int keepCount=2;
+	if(setsockopt(client_sockfd,SOL_SOCKET,SO_KEEPALIVE,(void*)&keepAlive,sizeof(keepAlive))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(client_sockfd,SOL_TCP,TCP_KEEPIDLE,(void*)&keepIdle,sizeof(keepIdle))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(client_sockfd,SOL_TCP,TCP_KEEPINTVL,(void*)&keepInterval,sizeof(keepInterval))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(client_sockfd,SOL_TCP,TCP_KEEPCNT,(void*)&keepCount,sizeof(keepCount))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+*/
 	do
 	{
 		result=connect(client_sockfd,(struct sockaddr*)&client_address,client_len);
 		if(result!=-1)
 			break;
-		sleep(++i*3);
-	}while(i<20);
-//	printf("1\n");
+		printf("plc conn try:%d times\n",i);
+		sleep(1);
+		i++;
+	}while(i<=20);
 	if(result==-1)
 	{
-		DEBUG("connect error");
+		DEBUG("CONNECT ERROR");
+		db=db_init();
+		dbrecord_v2("PLC CONNECT ABNORMAL",db);
+		send_signal(3);
+	}
+	while(i>20)
+	{
+		result=connect(client_sockfd,(struct sockaddr*)&client_address,client_len);
+		if(result!=-1)
+			break;
+		sleep(i*3);
+	}
+
+//	printf("1\n");
+//	if(result==-1)
+//	{
+//		DEBUG("connect error");
+//		exit(1);
+//	}
+	struct timeval tv;
+	tv.tv_sec=5;
+	tv.tv_usec=0;
+	if(setsockopt(client_sockfd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof(tv))<0)
+	{
+		DEBUG("set sendtimeout error");
 		exit(1);
 	}
 	printf("local:connect PLC OK!\n");
@@ -557,7 +628,7 @@ void* first_level_recv(void* arg)
 			exit(1);
 		}
 //		printf("send msg data ok \n");
-		usleep(200000);
+		usleep(500000);
 	}
 	pthread_exit((void*)1);
 }
@@ -720,7 +791,7 @@ void *second_level_recv(void *arg)
 				sem_v(semid);
 				if(flag==1)
 				{
-					usleep(200000);
+					usleep(500000);
 					break;
 				}
 				else
@@ -847,7 +918,9 @@ int tcp_receive(int fd,unsigned char *data)
 			DEBUG("write error");
 			exit(1);
 		}
+//		printf("1\n");
 		rc=read(fd,temp,REQUEST);
+//		printf("2\n");
 	//	for(i=0;i<rc;i++)
 	//		printf("%02x ",temp[i]);
 	//	printf("rc=%d\n",rc);
@@ -856,7 +929,9 @@ int tcp_receive(int fd,unsigned char *data)
 			q=(struct fetch_res*)temp;
 			if(q->error_field==0x00)
 			{
+//				printf("3\n");
 				rc=read(fd,temp,PLC_LEN);
+//				printf("4\n");
 	//			for(i=0;i<rc;i++)
 	//				printf("%02x ",temp[i]);
 				if(rc<=0)

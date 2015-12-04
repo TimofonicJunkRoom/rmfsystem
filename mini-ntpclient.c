@@ -135,13 +135,14 @@ int ntp()
 	int i;
 	char value[30];
 	memset(value,'\0',sizeof(value));
-	read_file("NTP","address",value);
+	read_file("NTP","ntpaddress",value);
 	if(strlen(value)!=0) {
 		int rc = query_server(value);
 
 		/* Done, time set! */
 		if (0 == rc){
 			printf("set time ok!\n");
+			system("date");
 			return 0;
 		}
 		/* Fatal error, exit now. */

@@ -11,6 +11,7 @@
 =========================================================================*/
 #include "client_pipe.h"
 
+#include "rmfsystem.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -21,7 +22,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <sqlite3.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <time.h>
@@ -36,6 +36,7 @@
 #include "base64.h"
 #include <sys/shm.h>
 
+int plc_connect_err=0;
 int commandnumber;
 int datalevel1;
 int datalevel2;
@@ -50,7 +51,33 @@ int remote_msgid;
 pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
 
-void write_pid_remote();
+
+void *signal_wait(void *arg)
+{
+	int result;
+	char value[20];
+	printf("remote:signal pthread begin\n");
+	int err;
+	int signo;
+	sigset_t sigset;
+	sigemptyset(&sigset);
+	sigaddset(&sigset,SIGUSR1);
+	while(1)
+	{
+		err=sigwait(&sigset,&signo);
+		if(err!=0)
+		{
+			DEBUG("SIGNAL ERROR:%d",err);
+			exit(1);
+		}
+		if(signo==SIGUSR1)
+		{
+			printf("plc error\n");
+			plc_connect_err=plc_connect_err?0:1;
+			printf("remote:plc_connect_err");
+		}
+	}
+}
 
 void write_pid_remote()
 {
@@ -65,14 +92,19 @@ void write_pid_remote()
 		exit(1);
 	fpnew=fopen("process.config.new","a");
 	if(fpnew==NULL)
+	{
+		DEBUG("OPEN FILE ERROR");
 		exit(1);
+	}
 	while(fgets(line,50,fp))
 	{
+//		printf("xx\n");
 		if(strncmp(line,"remote_pid",10)==0)
 		{
+//			printf("ii\n");
 			pid=getpid();
 			sprintf(newline,"remote_pid=%d\n",pid);
-			fputs(line,fpnew);
+			fputs(newline,fpnew);
 		}
 		else
 			fputs(line,fpnew);
@@ -83,35 +115,6 @@ void write_pid_remote()
 	rename("process.config.new",PRO_CONF);
 //	printf("write process.config ok\n");
 	return;
-}
-/*
- *state:
- *1:change the collecting rate
- *2:something happened in network
- */
-int send_signal(int state)
-{
-
-	int ret;
-	int pid;
-	char *p;
-	char line[100];
-	if(state==1)
-	{
-		read_file_v2("pid","local_pid",line);
-		pid=atoi(line);
-	}
-	else if(state==2)
-	{
-		read_file_v2("pid","deal_pid",line);
-		pid=atoi(line);
-	}
-	ret=kill((pid_t)pid,SIGUSR1);
-	printf("remote:send signal SIGUSR1\n");
-	if(ret==0)
-		return 1;
-	else 
-		return 0;
 }
 
 int data_response()
@@ -647,9 +650,14 @@ void main()
 	int err;
 	dbinit();
 	msg_init();
+	sigset_t set;
+	sigemptyset(&set);
+	sigaddset(&set,SIGUSR1);
+	err=pthread_sigmask(SIG_BLOCK,&set,NULL);
 	write_pid_remote();
 	pthread_t tid1;
 	pthread_t tid2;
+	pthread_t tid3;
 	pthread_attr_t attr;
 	err=pthread_attr_init(&attr);
 	if(err!=0)
@@ -666,6 +674,9 @@ void main()
 		if(err!=0)
 			exit(1);
 		err=pthread_create(&tid2,&attr,remote_send,NULL);
+		if(err!=0)
+			exit(1);
+		err=pthread_create(&tid3,&attr,signal_wait,NULL);
 		if(err!=0)
 			exit(1);
 		pthread_attr_destroy(&attr);
@@ -898,11 +909,36 @@ int login()
 		}
 		strcpy(value,he->h_addr_list[0]);
 	}
-//	printf("value=%s\n",value);
+	printf("value=%s\n",value);
 	address.sin_addr.s_addr = inet_addr(value);
 	address.sin_port = htons(13000);
 	len = sizeof(address);
-//	setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeo,sizeof(struct timeval));
+	int keepAlive=1;
+	int keepIdle=5;
+	int keepInterval=3;
+	int keepCount=2;
+
+	if(setsockopt(fd,SOL_SOCKET,SO_KEEPALIVE,(void*)&keepAlive,sizeof(keepAlive))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(fd,SOL_TCP,TCP_KEEPIDLE,(void*)&keepIdle,sizeof(keepIdle))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(fd,SOL_TCP,TCP_KEEPINTVL,(void*)&keepInterval,sizeof(keepInterval))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+	if(setsockopt(fd,SOL_TCP,TCP_KEEPCNT,(void*)&keepCount,sizeof(keepCount))<0)
+	{
+		DEBUG("SET KEEP ERROR:%d",errno);
+		exit(1);
+	}
+
 //	setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeo,sizeof(struct timeval));
 	result = connect(fd, (struct sockaddr *)&address, len);
 //	printf("result=%d\n",result);
@@ -924,20 +960,20 @@ int login()
 		if(result==-1)
 		{
 			DEBUG("CONNECT ERROR");
-			dbrecord_v2("NETWORK ABNORMAL");
+			dbrecord_v2("NETWORK ABNORMAL",db);
 			addoraltconfig(DEV_CONF,"setting","setting=2");
 		//	printf("xx\n");
-			send_signal(i*3);
+			send_signal(2);
 		}
 		while((i>20)&&(result==-1))
 		{
 			result=connect(fd,(struct sockaddr*)&address,len);
-			sleep(2);
+			sleep(i*3);
 		}
 	}
 	if(result!=-1)
 	{
-		dbrecord_v2("NETWORK NORMAL");
+		dbrecord_v2("NETWORK NORMAL",db);
 		read_file("setting","setting",value);
 //		printf("1\r\n");
 		result=atoi(value);
@@ -1320,6 +1356,7 @@ int send_level3(struct msg_remote data)
 void *remote_send(void *arg)
 {
 	int rc;
+	char time[100];
 	int init=1;
 	unsigned char c;
 	unsigned char real_time_data[256];
@@ -1432,6 +1469,18 @@ void *remote_send(void *arg)
 					break;
 				}
 			}
+			if(plc_connect_err)
+			{
+				gettime(time);
+				sprintf(sendbuf,"RUNS 002\r\nlength=0\r\nstate=PLC connect error\r\n\r\n");
+				rc=write(socketfd,sendbuf,strlen(sendbuf));
+				if(rc<=0)
+				{
+					DEBUG("WRITE ERROR");
+					exit(1);
+				}
+				plc_connect_err=0;
+			}
 			if(real_time==1)
 				break;
 			if(getsem(semid))
@@ -1509,41 +1558,7 @@ void *remote_send(void *arg)
 	*/
 }
 
-void gettime(char *datetime)
-{
-	time_t now;
-	char date[100];
-	struct tm *tm_now;
-	time(&now);
-	tm_now=localtime(&now);
-	sprintf(date,"%d-%d-%d %d:%d:%d",(tm_now->tm_year+1900),(tm_now->tm_mon+1),tm_now->tm_mday,tm_now->tm_hour,tm_now->tm_min,tm_now->tm_sec);
-	memcpy(datetime,date,strlen(date));
-	return;
-}
 
-void dbrecord_v2(char* state)
-{
-	int rc;
-	char sql[256];
-	char * errmsg=0;
-	char time[100];
-	gettime(time);
-	sprintf(sql,"insert into device_running_statement values(\"%s\",\"%s\")",time,state);
-	while(1)
-	{
-		rc=sqlite3_exec(db,sql,0,0,&errmsg);
-		if(rc!=SQLITE_OK)
-		{
-			if(rc==SQLITE_BUSY)
-				continue;
-			DEBUG("REMOTE RECORD ERROR");
-			exit(1);
-		}
-		else
-			break;
-	}
-	return;
-}
 
 void dbrecord(char* state)
 {

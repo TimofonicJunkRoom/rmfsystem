@@ -26,7 +26,7 @@ union semun
 	unsigned short *array;
 };
 
-int sem_get();
+int sem_get(int);
 int init_sem(int,int);
 int del_sem(int);
 int sem_p(int);

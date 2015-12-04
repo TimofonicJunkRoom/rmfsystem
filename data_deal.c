@@ -70,7 +70,7 @@ void *signal_wait(void *arg)
 {
 	int result;
 	char value[20];
-	printf("deal:deal pthread begin\n");
+	printf("deal:signal pthread begin\n");
 	int err;
 	int signo;
 	sigset_t sigset;
@@ -94,9 +94,11 @@ void *signal_wait(void *arg)
 					real_time=1;
 				break;
 			case SIGUSR1:
-			//	printf("1\n");
+				printf("1\n");
 				read_file("setting","setting",value);
 				result=atoi(value);
+				if(result!=2)
+					continue;
 				printf("deal:network\n");
 				if(result==2)
 				{

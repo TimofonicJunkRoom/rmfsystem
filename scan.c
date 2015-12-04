@@ -149,7 +149,7 @@ done:
 }
 
 
-int scan()
+int scan(void)
 {
 	int sockfd;
 	while(1)
